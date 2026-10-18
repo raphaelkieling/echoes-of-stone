@@ -15,13 +15,20 @@ function SpriteRenderer:draw(context)
     local transform = self.owner:getComponent("Transform")
     local animation = self.owner:getComponent("Animation")
     local x, y = transform.x, transform.y
+    local rotation = 0
+    local stateMachine = self.owner:getComponent("StateMachine")
+    if stateMachine then
+        local swayRotation, offsetX, offsetY = stateMachine:visualOffset()
+        x, y = x + offsetX, y + offsetY
+        rotation = swayRotation
+    end
     local shake = self.owner:getComponent("Shake")
     if shake then
         local offsetX, offsetY = shake:offset()
         x, y = x + offsetX, y + offsetY
     end
     animation:render(self.image, x, y, self.scale,
-        context and context.selected and self.outlineShader or nil)
+        context and context.selected and self.outlineShader or nil, rotation)
 end
 
 function SpriteRenderer:setAppearance(image, scale, renderLayer, outlineShader)

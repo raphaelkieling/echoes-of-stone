@@ -19,6 +19,11 @@ function ActionHistory:undo()
     end
     for _, snapshot in ipairs(snapshots) do
         snapshot.object:getComponent("Transform"):restore(snapshot)
+        local player = snapshot.object:getComponent("Player")
+        local stateMachine = player and player:getStateMachine()
+        if stateMachine then
+            stateMachine:change(#snapshots > 1 and "pushing" or "walking")
+        end
     end
     return true
 end

@@ -3,7 +3,9 @@ local GameObject = require("src.core.GameObject")
 local Transform = require("src.components.Transform")
 local InteractiveObject = require("src.components.InteractiveObject")
 local Player = require("src.components.Player")
+local StateMachine = require("src.components.StateMachine")
 local CharacterClasses = require("src.characters.Classes")
+local PlayerStates = require("src.characters.PlayerStates")
 local Box = require("src.components.Box")
 local Shake = require("src.components.Shake")
 local CharacterMovement = require("src.game.CharacterMovement")
@@ -36,6 +38,7 @@ local function spawnPlayer(board, x, y, classId)
     local playerComponent = Player()
     player:addComponent(playerComponent)
     playerComponent:setClass(CharacterClasses.create(classId))
+    player:addComponent(StateMachine(PlayerStates, "idle"))
     board:addObject(player)
     return player
 end
@@ -100,6 +103,65 @@ function tests.dwarf_cannot_push_into_wall_or_off_map()
     assertPosition(dwarf, 1, 0)
     assertPosition(box, 2, 0)
     assert(box:getComponent("Shake").elapsed == 0, "blocked box push should trigger its shake")
+end
+
+function tests.player_starts_idle_and_idle_state_applies_subtle_sway()
+    local board = makeBoard(0, 4, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local stateMachine = player:getComponent("Player"):getStateMachine()
+
+    assert(stateMachine.currentName == "idle")
+    player:update(0.1)
+    local rotation, offsetX, offsetY = stateMachine:visualOffset()
+    assert(math.abs(rotation) + math.abs(offsetX) + math.abs(offsetY) > 0)
+end
+
+function tests.player_switches_from_walking_back_to_idle()
+    local board = makeBoard(0, 4, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local stateMachine = player:getComponent("Player"):getStateMachine()
+
+    assert(run(board, player, {x = 1, y = 0}))
+    assert(stateMachine.currentName == "walking")
+    player:update(0.2)
+    assert(stateMachine.currentName == "idle")
+end
+
+function tests.undo_uses_walking_state_until_the_tween_finishes()
+    local board = makeBoard(0, 4, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local history = ActionHistory()
+    local stateMachine = player:getComponent("Player"):getStateMachine()
+
+    assert(CharacterMovement.move(board, player, {x = 1, y = 0}, history))
+    assert(history:undo())
+    assert(stateMachine.currentName == "walking")
+    player:update(0.2)
+    assertPosition(player, 1, 0)
+    assert(stateMachine.currentName == "idle")
+end
+
+function tests.player_uses_pushing_state_during_a_push()
+    local board = makeBoard(0, 4, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local box = spawnBox(board, 2, 0)
+    local stateMachine = player:getComponent("Player"):getStateMachine()
+
+    assert(run(board, player, {x = 1, y = 0}))
+    assert(stateMachine.currentName == "pushing")
+    player:update(0.2)
+    assert(stateMachine.currentName == "idle")
+    assertPosition(box, 3, 0)
+end
+
+function tests.player_pushed_as_an_object_uses_pushing_state()
+    local board = makeBoard(0, 5, 0)
+    local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local wizard = spawnPlayer(board, 2, 0, Player.Classes.WIZARD)
+    local stateMachine = wizard:getComponent("Player"):getStateMachine()
+
+    assert(run(board, dwarf, {x = 1, y = 0}))
+    assert(stateMachine.currentName == "pushing")
 end
 
 function tests.wizard_swaps_with_first_object_in_ray()

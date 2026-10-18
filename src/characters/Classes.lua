@@ -23,7 +23,8 @@ end
 
 function Classes.register(classId, implementation)
     assert(type(classId) == "string" and classId ~= "", "class id must be a non-empty string")
-    assert(implementation and implementation.id == classId and implementation.move,
+    assert(type(implementation) == "table" and implementation.id == classId
+        and type(rawget(implementation, "move")) == "function",
         "class implementation must define the matching id and move method")
     implementations[classId] = implementation
 end

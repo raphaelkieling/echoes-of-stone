@@ -83,11 +83,11 @@
             "scaleInDock": 1
         },
         "level4.tmj": {
-            "scale": 2,
+            "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 204.75,
-                "y": 189.5
+                "x": 254.33333333333331,
+                "y": 143.33333333333331
             }
         },
         "level4.tmj#rogues": {

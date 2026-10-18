@@ -1,0 +1,128 @@
+local MovementSession = {}
+MovementSession.__index = MovementSession
+
+function MovementSession.new(board)
+    local self = setmetatable({
+        board = board,
+        positions = {},
+        blockedObjects = {},
+        blockedObjectSet = {},
+    }, MovementSession)
+
+    for _, object in ipairs(board.objects) do
+        if object:hasComponent("InteractiveObject") then
+            local transform = object:getComponent("Transform")
+            self.positions[object] = {x = transform.gridX, y = transform.gridY}
+        end
+    end
+    return self
+end
+
+function MovementSession:position(object)
+    return self.positions[object]
+end
+
+function MovementSession:canWalk(x, y)
+    return self.board:canWalk(x, y)
+end
+
+function MovementSession:objectAt(x, y, except)
+    for _, object in ipairs(self.board.objects) do
+        local position = self.positions[object]
+        if object ~= except and position and position.x == x and position.y == y then
+            return object
+        end
+    end
+end
+
+function MovementSession:moveObject(object, x, y)
+    self.positions[object] = {x = x, y = y}
+end
+
+function MovementSession:markBlocked(object)
+    if not object or self.blockedObjectSet[object] then return end
+    self.blockedObjectSet[object] = true
+    self.blockedObjects[#self.blockedObjects + 1] = object
+end
+
+function MovementSession:enter(actor, x, y)
+    if not self:canWalk(x, y) then return false end
+    local blocker = self:objectAt(x, y, actor)
+    if blocker then
+        self:markBlocked(blocker)
+        return false
+    end
+    self:moveObject(actor, x, y)
+    return true
+end
+
+function MovementSession:findInRay(startX, startY, direction, actor)
+    local x, y = startX, startY
+    while self:canWalk(x, y) do
+        local target = self:objectAt(x, y, actor)
+        if target then return target end
+        x, y = x + direction.x, y + direction.y
+    end
+end
+
+function MovementSession:pushChain(actor, destination, direction, maxDistance)
+    local first = self:objectAt(destination.x, destination.y, actor)
+    if not first then
+        return self:enter(actor, destination.x, destination.y)
+    end
+
+    local chain = {}
+    local x, y = destination.x, destination.y
+    while self:canWalk(x, y) do
+        local object = self:objectAt(x, y, actor)
+        if not object then break end
+        chain[#chain + 1] = object
+        x, y = x + direction.x, y + direction.y
+    end
+
+    local last = self:position(chain[#chain])
+    local distance = 0
+    while self:canWalk(last.x + direction.x * (distance + 1),
+        last.y + direction.y * (distance + 1))
+        and not self:objectAt(last.x + direction.x * (distance + 1),
+            last.y + direction.y * (distance + 1), actor) do
+        distance = distance + 1
+    end
+    if maxDistance then distance = math.min(distance, maxDistance) end
+    if distance == 0 then
+        self:markBlocked(chain[#chain])
+        return false
+    end
+
+    for index = #chain, 1, -1 do
+        local object = chain[index]
+        local position = self:position(object)
+        self:moveObject(object, position.x + direction.x * distance,
+            position.y + direction.y * distance)
+    end
+    return self:enter(actor, destination.x, destination.y)
+end
+
+function MovementSession:changedPositions()
+    local changes = {}
+    for _, object in ipairs(self.board.objects) do
+        local after = self.positions[object]
+        if after then
+            local transform = object:getComponent("Transform")
+            if transform.gridX ~= after.x or transform.gridY ~= after.y then
+                changes[#changes + 1] = {
+                    object = object,
+                    fromX = transform.gridX,
+                    fromY = transform.gridY,
+                    x = transform.x,
+                    y = transform.y,
+                    toX = after.x,
+                    toY = after.y,
+                }
+            end
+        end
+    end
+    return changes
+end
+
+return MovementSession

@@ -20,16 +20,9 @@ With `lua` installed:
 lua tests/run.lua
 ```
 
-## Developer console
+## Architecture
 
-Press the grave/tilde key (` or ~) to open or close the in-game console. Use `Tab` to autocomplete a command,
-`Enter` to run it, and `Esc` to close it. Available commands:
-
-- `show-solid` toggles outlines for solid map cells and interactive objects.
-- `show-solid on` / `show-solid off` explicitly enable or disable the outlines.
-- `jump-to 0` loads level 0; `jump-to p` loads the playground (also accepts a level name).
-- `help` lists registered commands.
-
-Commands are registered in `src/dev/ConsoleCommands.lua`. To remove the console
-and other developer UI from a production build, set `developmentMode` to `false` in
-`src/settings/BuildConfig.lua`.
+- Character abilities live in `src/characters/classes/`; each class implements its own `move` method.
+- `src/game/MovementSession.lua` provides shared grid and collision helpers. `CharacterMovement.lua` commits moves and records undo.
+- Player states live in `src/characters/states/` and are registered in `PlayerStates.lua`. Idle-only presentation, such as the subtle sway, belongs in `Idle.lua`.
+- To add a character class, create its class file and register it in `src/characters/Classes.lua`.

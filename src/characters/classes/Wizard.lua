@@ -5,8 +5,17 @@ Wizard.id = "wizard"
 Wizard.name = "Wizard"
 Wizard.sprite = {x = 1, y = 4, scale = 2.25}
 
-function Wizard:move(context, actor, direction, destination)
-    return context:swapWithFirstInRay(actor, direction, destination)
+function Wizard:move(movement, actor, direction, destination)
+    local target = movement:findInRay(destination.x, destination.y, direction, actor)
+    if not target then
+        return movement:enter(actor, destination.x, destination.y)
+    end
+
+    local actorPosition = movement:position(actor)
+    local targetPosition = movement:position(target)
+    movement:moveObject(target, actorPosition.x, actorPosition.y)
+    movement:moveObject(actor, targetPosition.x, targetPosition.y)
+    return true
 end
 
 return Wizard

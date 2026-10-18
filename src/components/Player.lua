@@ -29,6 +29,10 @@ function Player:getClass()
     return self.owner and self.owner:getComponent("CharacterClass") or nil
 end
 
+function Player:getStateMachine()
+    return self.owner and self.owner:getComponent("StateMachine") or nil
+end
+
 function Player:updateAppearance(classObject, assets)
     if not assets then return end
     local sprite = classObject.sprite

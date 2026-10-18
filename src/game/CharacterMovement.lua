@@ -1,4 +1,4 @@
-local MovementContext = require("src.game.MovementContext")
+local MovementSession = require("src.game.MovementSession")
 
 local CharacterMovement = {}
 
@@ -7,20 +7,56 @@ local function isCardinalDirection(direction)
         or (math.abs(direction.y) == 1 and direction.x == 0))
 end
 
+local function startPlayerStates(changes, actor)
+    local anotherObjectMoved = false
+    for _, change in ipairs(changes) do
+        if change.object ~= actor then
+            anotherObjectMoved = true
+            break
+        end
+    end
+
+    for _, change in ipairs(changes) do
+        local player = change.object:getComponent("Player")
+        local stateMachine = player and player:getStateMachine()
+        if stateMachine then
+            local stateName = change.object == actor and not anotherObjectMoved
+                and "walking" or "pushing"
+            stateMachine:change(stateName)
+        end
+    end
+end
+
+local function shakeBlockedObjects(session, direction)
+    for _, object in ipairs(session.blockedObjects) do
+        local shake = object:getComponent("Shake")
+        if shake then
+            shake:trigger(direction.x, direction.y)
+        end
+    end
+end
+
 function CharacterMovement.move(board, actor, direction, history)
     if not board or not actor or not actor:hasComponent("Player")
         or not actor:hasComponent("CharacterClass") or not isCardinalDirection(direction) then
         return false
     end
 
-    local context = MovementContext.new(board)
-    context:attempt(actor, direction, false)
-    local changes = context:changedPositions()
+    local movement = MovementSession.new(board)
+    local actorPosition = movement:position(actor)
+    if not actorPosition then return false end
+
+    local destination = {
+        x = actorPosition.x + direction.x,
+        y = actorPosition.y + direction.y,
+    }
+    if not movement:canWalk(destination.x, destination.y) then return false end
+
+    local characterClass = actor:getComponent("CharacterClass").behavior
+    characterClass:move(movement, actor, direction, destination)
+    local changes = movement:changedPositions()
     if #changes == 0 then
-        for _, object in ipairs(context.blockedObjects) do
-            local shake = object:getComponent("Shake")
-            if shake then shake:trigger(direction.x, direction.y) end
-        end
+        shakeBlockedObjects(movement, direction)
         return false
     end
 
@@ -36,6 +72,7 @@ function CharacterMovement.move(board, actor, direction, history)
         }
     end
     if history then history:record(snapshots) end
+    startPlayerStates(changes, actor)
     return true
 end
 
