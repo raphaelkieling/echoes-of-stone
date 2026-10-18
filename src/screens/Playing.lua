@@ -6,6 +6,8 @@ local Keymap = require("src.settings.Keymap")
 
 local Playing = {}
 Playing.__index = Playing
+local FOLLOW_ZOOM = 1.8
+local CAMERA_SMOOTHING = 9
 
 function Playing.new(game)
     return setmetatable({game = game, camera = cameraLib(0, 0, 1), history = ActionHistory(), levelIndex = 1, transition = nil}, Playing)
@@ -14,6 +16,7 @@ end
 function Playing:enter(levelIndex)
     self.levels = LevelLoader.listLevels()
     self.levelIndex = levelIndex or 1
+    self.cameraMode = "follow"
     self:loadLevel()
     self.paused = false
     self.pauseSelection = 1
@@ -25,19 +28,37 @@ function Playing:loadLevel()
     self.board = LevelLoader.load(level.path, self.game.assets)
     self.history:clear()
     self.activeIndex = 1
-    self:fitCamera()
+    self:snapCameraToTarget()
 end
 
-function Playing:fitCamera()
-    if not self.board then return end
+function Playing:mapCameraTarget()
+    if not self.board then return 0, 0, 1 end
     local width, height = love.graphics.getDimensions()
-    local zoom = math.min((width - 80) / (self.board.width * 64), (height - 130) / (self.board.height * 64)) * 1.12
-    self.camera:lookAt(self.board.width * 32, self.board.height * 32)
-    self.camera.scale = math.max(0.25, zoom)
+    local minX, minY, maxX, maxY = self.board:getFilledBounds()
+    minX, minY = minX or 0, minY or 0
+    maxX, maxY = maxX or (self.board.width - 1), maxY or (self.board.height - 1)
+    local worldWidth = (maxX - minX + 1) * 64
+    local worldHeight = (maxY - minY + 1) * 64
+    local zoom = math.min((width - 80) / worldWidth, (height - 130) / worldHeight) * 0.94
+    return (minX + maxX + 1) * 32, (minY + maxY + 1) * 32, math.max(0.25, zoom)
 end
 
-function Playing:resize()
-    self:fitCamera()
+function Playing:cameraTarget()
+    if self.cameraMode == "map" then
+        return self:mapCameraTarget()
+    end
+    local player = self:currentPlayer()
+    if player then
+        local transform = player:getComponent("Transform")
+        return transform.x, transform.y, FOLLOW_ZOOM
+    end
+    return self:mapCameraTarget()
+end
+
+function Playing:snapCameraToTarget()
+    local x, y, zoom = self:cameraTarget()
+    self.camera:lookAt(x, y)
+    self.camera.scale = zoom
 end
 
 function Playing:currentPlayer()
@@ -62,6 +83,13 @@ function Playing:update(dt)
         if self.transition.elapsed >= self.transition.duration then self.transition = nil end
     end
     if self.board then self.board:update(dt) end
+    if self.board then
+        local targetX, targetY, targetZoom = self:cameraTarget()
+        local smooth = 1 - math.exp(-CAMERA_SMOOTHING * dt)
+        self.camera.x = self.camera.x + (targetX - self.camera.x) * smooth
+        self.camera.y = self.camera.y + (targetY - self.camera.y) * smooth
+        self.camera.scale = self.camera.scale + (targetZoom - self.camera.scale) * smooth
+    end
     if not self.paused and self.board and not self.board:isMoving() and self.board:allBoxesOnTargets() then
         self:advanceLevel()
     end
@@ -124,6 +152,10 @@ function Playing:keypressed(key)
         return
     end
     if Keymap.matches("pause", key) then self.paused, self.pauseSelection = true, 1; return end
+    if Keymap.matches("toggleMapView", key) then
+        self.cameraMode = self.cameraMode == "map" and "follow" or "map"
+        return
+    end
     if self.board:isMoving() or self.transition then return end
     if Keymap.matches("switchPlayer", key) then
         if #self.board.players > 0 then self.activeIndex = self.activeIndex % #self.board.players + 1 end

@@ -1,0 +1,77 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInEditor": 1
+        },
+        "level0.tmj": {
+            "scale": 1.3522656249999998,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 320.2033624126178,
+                "y": 320.2033624126178
+            }
+        },
+        "level0.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level0.tmx.tmj": {
+            "scale": 3,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 188.33333333333331,
+                "y": 225.99999999999997
+            }
+        },
+        "level0.tmx.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level1.tmj": {
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 233.5,
+                "y": 182.5
+            }
+        },
+        "level1.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level1.tmx.tmj": {
+            "expandedObjectLayers": [
+                6
+            ],
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 231,
+                "y": 189
+            }
+        },
+        "level1.tmx.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level2.tmj": {
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 234,
+                "y": 179.5
+            }
+        },
+        "level2.tmj#tiles": {
+            "scaleInDock": 1
+        }
+    },
+    "openFiles": [
+    ],
+    "project": "sokoban.tiled-project",
+    "property.type": "bool",
+    "recentFiles": [
+        "level0.tmx.tmj",
+        "level1.tmx.tmj"
+    ]
+}

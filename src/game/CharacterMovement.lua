@@ -16,7 +16,13 @@ function CharacterMovement.move(board, actor, direction, history)
     local context = MovementContext.new(board)
     context:attempt(actor, direction, false)
     local changes = context:changedPositions()
-    if #changes == 0 then return false end
+    if #changes == 0 then
+        for _, object in ipairs(context.blockedObjects) do
+            local shake = object:getComponent("Shake")
+            if shake then shake:trigger(direction.x, direction.y) end
+        end
+        return false
+    end
 
     local snapshots = {}
     for _, change in ipairs(changes) do

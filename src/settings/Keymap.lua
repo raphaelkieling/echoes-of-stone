@@ -6,6 +6,7 @@ local Keymap = {
         moveRight = {"d", "right"},
         switchPlayer = {"j"},
         undo = {"k"},
+        toggleMapView = {"l"},
         pause = {"escape"},
         confirm = {"return", "kpenter"},
         cancel = {"escape"},
@@ -43,7 +44,7 @@ function Keymap.direction(key)
 end
 
 function Keymap.gameplayHint()
-    return string.format("%s move, %s switch, %s undo, %s menu",
+    return string.format("%s move, %s switch, %s undo, L map view, %s menu",
         Keymap.labels.move, Keymap.labels.switchPlayer, Keymap.labels.undo, Keymap.labels.pause)
 end
 

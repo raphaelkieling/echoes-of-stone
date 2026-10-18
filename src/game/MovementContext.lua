@@ -11,6 +11,8 @@ function MovementContext.new(board)
         positions = {},
         resolving = {},
         forced = {},
+        blockedObjects = {},
+        blockedObjectSet = {},
     }, MovementContext)
 
     for _, object in ipairs(board.objects) do
@@ -43,8 +45,19 @@ function MovementContext:moveObject(object, x, y)
     self.positions[object] = {x = x, y = y}
 end
 
+function MovementContext:markBlocked(object)
+    if not object or self.blockedObjectSet[object] then return end
+    self.blockedObjectSet[object] = true
+    self.blockedObjects[#self.blockedObjects + 1] = object
+end
+
 function MovementContext:enter(actor, x, y)
-    if not self:canWalk(x, y) or self:objectAt(x, y, actor) then return false end
+    if not self:canWalk(x, y) then return false end
+    local blocker = self:objectAt(x, y, actor)
+    if blocker then
+        self:markBlocked(blocker)
+        return false
+    end
     self:moveObject(actor, x, y)
     return true
 end
@@ -67,6 +80,7 @@ function MovementContext:chainAt(firstX, firstY, direction, actor)
         chain[#chain + 1] = object
         x, y = x + direction.x, y + direction.y
     end
+    return chain
 end
 
 function MovementContext:attempt(actor, direction, forced)
@@ -132,7 +146,10 @@ function MovementContext:walkOrPush(actor, direction, destination, maxDistance)
         distance = distance + 1
     end
     if maxDistance ~= "unlimited" then distance = math.min(distance, maxDistance) end
-    if distance == 0 then return forcedAny end
+    if distance == 0 then
+        self:markBlocked(currentChain[#currentChain])
+        return forcedAny
+    end
 
     for index = #currentChain, 1, -1 do
         local object = currentChain[index]
@@ -162,7 +179,16 @@ function MovementContext:pushFirstInRay(actor, direction, destination)
     if target then
         local targetPosition = self:position(target)
         local beyondX, beyondY = targetPosition.x + direction.x, targetPosition.y + direction.y
-        if not self:canWalk(beyondX, beyondY) or self:objectAt(beyondX, beyondY, actor) then return false end
+        if not self:canWalk(beyondX, beyondY) then
+            self:markBlocked(target)
+            return false
+        end
+        local blocker = self:objectAt(beyondX, beyondY, actor)
+        if blocker then
+            self:markBlocked(blocker)
+            self:markBlocked(target)
+            return false
+        end
         if isPlayer(target) then
             if not self:attempt(target, direction, true) then return false end
         else
@@ -182,6 +208,7 @@ function MovementContext:pullFirstInRay(actor, direction, destination)
         if recoilX == destination.x and recoilY == destination.y
             or not self:canWalk(recoilX, recoilY)
             or self:objectAt(recoilX, recoilY, actor) then
+            self:markBlocked(target)
             return false
         end
         if isPlayer(target) then

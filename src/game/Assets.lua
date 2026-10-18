@@ -22,6 +22,7 @@ function Assets.new()
         players = players,
         tileGrid = anim8.newGrid(32, 32, tiles:getWidth(), tiles:getHeight()),
         playerGrid = anim8.newGrid(32, 32, players:getWidth(), players:getHeight()),
+        tileColumns = tiles:getWidth() / 32,
         outlineShader = love.graphics.newShader(outlineShaderSource),
     }, Assets)
 end
@@ -36,6 +37,12 @@ end
 
 function Assets:playerAnimation(tileX, tileY)
     return anim8.newAnimation(self.playerGrid(tileX + 1, tileY + 1), 1)
+end
+
+function Assets:tileQuad(tileId)
+    local column = tileId % self.tileColumns
+    local row = math.floor(tileId / self.tileColumns)
+    return self.tileGrid(column + 1, row + 1)[1]
 end
 
 function Assets:playerRenderer(scale, layer)

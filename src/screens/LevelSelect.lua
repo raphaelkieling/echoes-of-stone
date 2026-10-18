@@ -13,7 +13,7 @@ function LevelSelect:draw()
     love.graphics.setColor(0.93, 0.93, 0.9, 1)
     love.graphics.printf("SELECT LEVEL", 0, 32, width, "center")
     for index, level in ipairs(self.levels) do
-        local label = string.format("lvl_%d.txt", level.number)
+        local label = level.name or string.format("lvl_%d.txt", level.number)
         love.graphics.print((index == self.selected and "> " or "  ") .. label, 40, 84 + (index - 1) * 28)
     end
     love.graphics.print("Up/Down: select   Enter: play   Esc: back", 24, love.graphics.getHeight() - 36)
