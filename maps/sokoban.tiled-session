@@ -9,11 +9,14 @@
         },
         "level0.tmj": {
             "scale": 1.3522656249999998,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
                 "x": 320.2033624126178,
                 "y": 320.2033624126178
             }
+        },
+        "level0.tmj#rogues": {
+            "scaleInDock": 1
         },
         "level0.tmj#tiles": {
             "scaleInDock": 1
@@ -78,8 +81,26 @@
         },
         "level3.tmj#tiles": {
             "scaleInDock": 1
+        },
+        "level_playground.tmj": {
+            "expandedObjectLayers": [
+                6
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 267,
+                "y": 206
+            }
+        },
+        "level_playground.tmj#rogues": {
+            "scaleInDock": 2
+        },
+        "level_playground.tmj#tiles": {
+            "scaleInDock": 1
         }
     },
+    "last.imagePath": "/Users/raphaelkieling/Dev/personal/sokoban/assets",
     "openFiles": [
     ],
     "project": "sokoban.tiled-project",
@@ -87,5 +108,6 @@
     "recentFiles": [
         "level0.tmx.tmj",
         "level1.tmx.tmj"
-    ]
+    ],
+    "tileset.embedInMap": true
 }

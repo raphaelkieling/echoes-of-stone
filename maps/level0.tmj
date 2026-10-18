@@ -39,7 +39,7 @@
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 294, 0, 282, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 443, 0, 294, 0, 282, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 308, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 325, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -61,41 +61,6 @@
          "type":"tilelayer",
          "visible":true,
          "width":20,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":6,
-         "name":"Entities",
-         "objects":[
-                {
-                 "height":0,
-                 "id":3,
-                 "name":"Player",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"characterClass",
-                         "type":"string",
-                         "value":"dwarf"
-                        }, 
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":80,
-                 "y":176
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
          "x":0,
          "y":0
         }],
@@ -217,6 +182,19 @@
                          "value":true
                         }]
                 }],
+         "tilewidth":32
+        }, 
+        {
+         "columns":7,
+         "firstgid":443,
+         "image":"..\/assets\/rogues.png",
+         "imageheight":224,
+         "imagewidth":224,
+         "margin":0,
+         "name":"rogues",
+         "spacing":0,
+         "tilecount":49,
+         "tileheight":32,
          "tilewidth":32
         }],
  "tilewidth":32,

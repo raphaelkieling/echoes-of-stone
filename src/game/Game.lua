@@ -16,7 +16,7 @@ function Game.new()
     self.scenes:register("menu", MainMenu.new)
     self.scenes:register("levels", LevelSelect.new)
     self.scenes:register("playing", Playing.new)
-    self.scenes:switch("menu")
+    self.scenes:switch("levels")
     return self
 end
 

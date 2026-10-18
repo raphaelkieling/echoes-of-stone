@@ -1,5 +1,6 @@
 local Board = require("src.game.Board")
 local Player = require("src.components.Player")
+local CharacterClasses = require("src.characters.Classes")
 local json = require("vendor.json")
 
 local LevelLoader = {}
@@ -10,6 +11,14 @@ local PLAYER_MARKERS = {
     ["3"] = Player.Classes.WARRIOR,
     ["4"] = Player.Classes.TELEKINETIC,
     ["5"] = Player.Classes.SORCERER,
+}
+
+local PLAYER_CLASS_IDS = {
+    Player.Classes.DWARF,
+    Player.Classes.WIZARD,
+    Player.Classes.WARRIOR,
+    Player.Classes.TELEKINETIC,
+    Player.Classes.SORCERER,
 }
 
 function LevelLoader.listLevels()
@@ -69,6 +78,64 @@ local function cleanGid(gid)
     return (gid or 0) % 0x10000000
 end
 
+local function tilesetForGid(map, gid)
+    if gid <= 0 then return nil end
+    for index = #(map.tilesets or {}), 1, -1 do
+        local tileset = map.tilesets[index]
+        if gid >= tileset.firstgid and gid < tileset.firstgid + (tileset.tilecount or 0) then
+            return tileset
+        end
+    end
+end
+
+local function isRoguesTileset(tileset)
+    if not tileset then return false end
+    local imageName = (tileset.image or ""):match("[^/\\]+$") or ""
+    return (tileset.name or ""):lower() == "rogues" or imageName:lower() == "rogues.png"
+end
+
+local function classForRogueTile(tileset, gid)
+    if not isRoguesTileset(tileset) then return nil end
+    local columns = tileset.columns or math.floor(tileset.imagewidth / tileset.tilewidth)
+    local tileId = gid - tileset.firstgid
+    local tileX = tileId % columns
+    local tileY = math.floor(tileId / columns)
+    for _, classId in ipairs(PLAYER_CLASS_IDS) do
+        local sprite = CharacterClasses.create(classId).sprite
+        if sprite.x == tileX and sprite.y == tileY then
+            return classId, tileX, tileY
+        end
+    end
+    return nil, tileX, tileY
+end
+
+local function objectGridPosition(object, map, tileset)
+    local x, y = object.x or 0, object.y or 0
+    if not object.gid then
+        return math.floor(x / map.tilewidth), math.floor(y / map.tileheight)
+    end
+
+    local width = object.width or (tileset and tileset.tilewidth) or map.tilewidth
+    local height = object.height or (tileset and tileset.tileheight) or map.tileheight
+    local alignment = (tileset and tileset.objectalignment) or "unspecified"
+    if alignment == "unspecified" then alignment = "bottomleft" end
+
+    local left = x
+    if alignment:find("right", 1, true) then
+        left = x - width
+    elseif alignment == "center" or alignment == "top" or alignment == "bottom" then
+        left = x - width / 2
+    end
+
+    local top = y
+    if alignment:find("bottom", 1, true) then
+        top = y - height
+    elseif alignment == "center" or alignment == "left" or alignment == "right" then
+        top = y - height / 2
+    end
+    return math.floor(left / map.tilewidth), math.floor(top / map.tileheight)
+end
+
 local function loadTiled(path, assets)
     local contents, readError = love.filesystem.read(path)
     assert(contents, "failed to read " .. path .. ": " .. tostring(readError))
@@ -92,8 +159,10 @@ local function loadTiled(path, assets)
                 if gid ~= 0 then
                     local x = ((index - 1) % layerWidth) + (layer.x or 0)
                     local y = math.floor((index - 1) / layerWidth) + (layer.y or 0)
-                    local tileset = metadata[gid]
-                    local properties = tileset and tileset.properties or {}
+                    local tileset = tilesetForGid(map, gid)
+                    assert(tileset, string.format("tile GID %d in layer %s has no tileset in %s", gid, layer.name, path))
+                    local tileMetadata = metadata[gid]
+                    local properties = tileMetadata and tileMetadata.properties or {}
                     local kind = properties.kind
                     local cell = board:getCell(x, y) or {walkable = false, wall = false, target = false}
 
@@ -108,22 +177,39 @@ local function loadTiled(path, assets)
 
                     if kind == "box" or kind == "target" then
                         markedObjects[#markedObjects + 1] = {
-                            x = x, y = y, kind = kind, tileId = tileset.id,
+                            x = x, y = y, kind = kind,
+                            tileId = tileMetadata and tileMetadata.id or (gid - tileset.firstgid),
                         }
+                    elseif kind == "player" or isRoguesTileset(tileset) then
+                        local classId = properties.characterClass or classForRogueTile(tileset, gid)
+                        assert(classId, string.format(
+                            "player tile in %s does not match a configured character sprite (tile %d)",
+                            path, gid - tileset.firstgid))
+                        assert(board:canWalk(x, y), "player must be placed on walkable ground in " .. path)
+                        board:spawnPlayer(classId, x, y)
                     elseif kind ~= "player" then
-                        board:addMapTile(x, y, tileset and tileset.id or (gid - 1))
+                        board:addMapTile(x, y, tileMetadata and tileMetadata.id or (gid - tileset.firstgid))
                     end
                 end
             end
         elseif layer.visible ~= false and layer.type == "objectgroup" then
             for _, object in ipairs(layer.objects or {}) do
                 local properties = propertiesByName(object.properties)
-                local kind = properties.kind or object.type or object.class or object.name
-                local x = math.floor((object.x or 0) / map.tilewidth)
-                local y = math.floor((object.y or 0) / map.tileheight)
+                local gid = cleanGid(object.gid)
+                local tileset = tilesetForGid(map, gid)
+                local tileMetadata = metadata[gid]
+                local classIdFromSprite = classForRogueTile(tileset, gid)
+                local kind = properties.kind
+                    or (tileMetadata and tileMetadata.properties.kind)
+                    or (isRoguesTileset(tileset) and "player")
+                    or object.type or object.class or object.name
+                if type(kind) == "string" then kind = kind:lower() end
+                local x, y = objectGridPosition(object, map, tileset)
                 if kind == "player" then
-                    local classId = properties.characterClass
-                    assert(classId, "player object is missing characterClass in " .. path)
+                    local classId = properties.characterClass or classIdFromSprite
+                    assert(classId, string.format(
+                        "player tile in %s does not match a configured character sprite (tile %d)",
+                        path, gid - (tileset and tileset.firstgid or 1)))
                     assert(board:canWalk(x, y), "player must be placed on walkable ground in " .. path)
                     board:spawnPlayer(classId, x, y)
                 elseif kind == "box" or kind == "target" then

@@ -41,9 +41,9 @@
             0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
             0, 86, 0, 294, 0, 0, 294, 0, 0, 0, 294, 0, 0, 294, 0, 86, 0, 0, 0, 0,
             0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 0, 0, 0, 0, 0, 0, 308, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
             0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
-            0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
-            0, 86, 376, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 376, 0, 443, 0, 472, 0, 454, 0, 445, 0, 474, 0, 0, 86, 0, 0, 0, 0,
             0, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -68,127 +68,7 @@
          "draworder":"topdown",
          "id":6,
          "name":"Entities",
-         "objects":[
-                {
-                 "height":0,
-                 "id":3,
-                 "name":"Player",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"characterClass",
-                         "type":"string",
-                         "value":"dwarf"
-                        }, 
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":144,
-                 "y":304
-                }, 
-                {
-                 "height":0,
-                 "id":7,
-                 "name":"Player",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"characterClass",
-                         "type":"string",
-                         "value":"wizard"
-                        }, 
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":208,
-                 "y":304
-                }, 
-                {
-                 "height":0,
-                 "id":8,
-                 "name":"Player",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"characterClass",
-                         "type":"string",
-                         "value":"warrior"
-                        }, 
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":272,
-                 "y":304
-                }, 
-                {
-                 "height":0,
-                 "id":9,
-                 "name":"Player",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"characterClass",
-                         "type":"string",
-                         "value":"telekinetic"
-                        }, 
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":336,
-                 "y":304
-                }, 
-                {
-                 "height":0,
-                 "id":10,
-                 "name":"Player",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"characterClass",
-                         "type":"string",
-                         "value":"sorcerer"
-                        }, 
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":400,
-                 "y":304
-                }],
+         "objects":[],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -331,6 +211,19 @@
                          "value":true
                         }]
                 }],
+         "tilewidth":32
+        }, 
+        {
+         "columns":7,
+         "firstgid":443,
+         "image":"..\/assets\/rogues.png",
+         "imageheight":224,
+         "imagewidth":224,
+         "margin":0,
+         "name":"rogues",
+         "spacing":0,
+         "tilecount":49,
+         "tileheight":32,
          "tilewidth":32
         }],
  "tilewidth":32,
