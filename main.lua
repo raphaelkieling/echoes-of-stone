@@ -2,7 +2,7 @@ local Game = require("src.game.Game")
 
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
-    love.graphics.setBackgroundColor(0.035, 0.045, 0.065, 1)
+    love.graphics.setBackgroundColor(0.045, 0.04, 0.032, 1)
     love.game = Game.new()
 end
 

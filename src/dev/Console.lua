@@ -125,37 +125,44 @@ end
 function Console:draw()
     if not self.open then return end
 
-    local width = math.min(love.graphics.getWidth() - 32, 920)
-    local x = (love.graphics.getWidth() - width) / 2
-    local y, height = 28, 210
+    local screenWidth = love.graphics.getWidth()
+    local width = math.min(screenWidth - 32, 880)
+    local x = (screenWidth - width) / 2
+    local y, height = 24, 184
     love.graphics.push("all")
-    love.graphics.setColor(0.015, 0.02, 0.035, 0.96)
-    love.graphics.rectangle("fill", x, y, width, height, 8, 8)
-    love.graphics.setColor(0.38, 0.82, 1, 0.9)
+    love.graphics.setColor(0.008, 0.018, 0.018, 0.98)
+    love.graphics.rectangle("fill", x, y, width, height)
+    love.graphics.setColor(0.22, 0.92, 0.58, 0.95)
     love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, width, height, 8, 8)
+    love.graphics.rectangle("line", x + 1, y + 1, width - 2, height - 2)
 
-    love.graphics.setColor(0.68, 0.78, 0.86, 1)
-    Fonts.set(16)
-    love.graphics.print("DEV CONSOLE    TAB: autocomplete    ENTER: run    ESC: close", x + 18, y + 14)
-    love.graphics.setColor(1, 1, 1, 1)
-    Fonts.set(24)
-    love.graphics.print("> " .. self.input .. "_", x + 18, y + 43)
+    love.graphics.setColor(0.45, 0.95, 0.69, 1)
+    Fonts.set(21)
+    love.graphics.print("DEV CONSOLE", x + 18, y + 10)
+    love.graphics.setColor(0.84, 1, 0.91, 1)
+    Fonts.set(29)
+    love.graphics.print("> " .. self.input .. "_", x + 18, y + 37)
 
     local prefix = self.input:match("^(%S*)") or ""
     local matches = self:matchingCommands(prefix)
-    Fonts.set(17)
+    Fonts.set(19)
     for index = 1, math.min(#matches, 3) do
         local command = matches[index]
-        love.graphics.setColor(index == 1 and 0.58 or 0.78, index == 1 and 0.92 or 0.82, 1, 1)
+        local rowY = y + 76 + (index - 1) * 22
+        if index == 1 then
+            love.graphics.setColor(0.055, 0.19, 0.12, 0.78)
+            love.graphics.rectangle("fill", x + 12, rowY - 2, width - 24, 22)
+        end
+        love.graphics.setColor(index == 1 and 0.43 or 0.72,
+            index == 1 and 1 or 0.86, index == 1 and 0.64 or 0.78, 1)
         love.graphics.print(command.name .. "  -  " .. command.description,
-            x + 26, y + 82 + (index - 1) * 23)
+            x + 22, rowY - 1)
     end
 
     if #self.output > 0 then
-        love.graphics.setColor(0.78, 0.82, 0.86, 1)
-        Fonts.set(15)
-        love.graphics.print(self.output[#self.output], x + 18, y + height - 25)
+        love.graphics.setColor(0.48, 0.72, 0.6, 1)
+        Fonts.set(17)
+        love.graphics.print(self.output[#self.output], x + 18, y + height - 23)
     end
     love.graphics.pop()
 end

@@ -22,7 +22,7 @@ end
 
 function CRT:draw(drawScene)
     love.graphics.setCanvas(self.canvas)
-    love.graphics.clear(0.035, 0.045, 0.065, 1)
+    love.graphics.clear(0.045, 0.04, 0.032, 1)
     love.graphics.setColor(1, 1, 1, 1)
     drawScene()
     love.graphics.setCanvas()

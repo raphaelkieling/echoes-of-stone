@@ -3,7 +3,8 @@ local CharacterMovement = require("src.game.CharacterMovement")
 local ActionHistory = require("src.game.ActionHistory")
 local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
-local Fonts = require("src.ui.Fonts")
+local BuildConfig = require("src.settings.BuildConfig")
+local UI = require("src.ui.Theme")
 
 local Playing = {}
 Playing.__index = Playing
@@ -140,23 +141,27 @@ function Playing:draw()
     self.board:draw(self:currentPlayer())
     self.camera:detach()
 
-    love.graphics.setColor(0.93, 0.93, 0.9, 1)
-    Fonts.set(18)
-    local player = self:currentPlayer()
-    if player then
-        local characterClass = player:getComponent("CharacterClass").behavior
-        love.graphics.print("Player: " .. characterClass.name .. "  (" .. Keymap.gameplayHint() .. ")", 16, 14)
-    end
-    love.graphics.print(self.levelPath or "", 16, 36)
+    local width, height = love.graphics.getDimensions()
+    local scale = UI.scale(width, height)
 
-    if self.paused then self:drawPause() end
     if self.transition then
         local progress = self.transition.elapsed / self.transition.duration
         local alpha = math.sin(math.min(progress, 1) * math.pi)
         love.graphics.setColor(0, 0, 0, alpha * 0.35)
         love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
     end
-    self:drawLevelTimeline()
+    if not self.paused then self:drawLevelTimeline() end
+    if self.paused then self:drawPause() end
+    self:drawDevelopmentFilename(width, height, scale)
+end
+
+function Playing:drawDevelopmentFilename(width, height, scale)
+    if not BuildConfig.developmentMode or not self.levelPath then return end
+    local filename = self.levelPath:match("([^/]+)$") or self.levelPath
+    UI.setColor("muted", 0.8)
+    UI.setFont(16, width, height)
+    love.graphics.printf(filename, 16 * scale, height - 34 * scale,
+        width - 32 * scale, "right")
 end
 
 function Playing:drawLevelTimeline()
@@ -172,7 +177,7 @@ function Playing:drawLevelTimeline()
 
     love.graphics.push("all")
     if count > 1 then
-        love.graphics.setColor(0.38, 0.42, 0.5, 0.85)
+        love.graphics.setColor(0.43, 0.40, 0.34, 0.85)
         love.graphics.setLineWidth(3)
         love.graphics.line(firstX, y, firstX + spacing * (count - 1), y)
     end
@@ -182,11 +187,11 @@ function Playing:drawLevelTimeline()
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.circle("fill", x, y, radius + 2)
         if self.game.completedLevels[level.path] then
-            love.graphics.setColor(0.55, 0.86, 1, 1)
+            UI.setColor("accent")
             love.graphics.circle("fill", x, y, radius)
         else
             local alpha = index == self.levelIndex and 1 or 0.58
-            love.graphics.setColor(0.88, 0.9, 0.94, alpha)
+            UI.setColor("text", alpha)
             love.graphics.setLineWidth(2)
             love.graphics.circle("line", x, y, radius)
         end
@@ -196,19 +201,53 @@ end
 
 function Playing:drawPause()
     local width, height = love.graphics.getDimensions()
+    local scale = UI.scale(width, height)
     love.graphics.setColor(0, 0, 0, 0.78)
-    love.graphics.rectangle("fill", width * 0.25, height * 0.2, width * 0.5, height * 0.6)
-    love.graphics.setColor(1, 1, 1, 1)
-    Fonts.set(28)
-    love.graphics.printf(self.completed and "All levels complete" or "Paused", 0, height * 0.27, width, "center")
-    local options = {"Continue", "Restart", "Levels", "Quit"}
-    Fonts.set(21)
+    love.graphics.rectangle("fill", 0, 0, width, height)
+    local panelWidth = math.min(width - 36 * scale, 620 * scale)
+    local panelHeight = 360 * scale
+    local panelX, panelY = (width - panelWidth) / 2, (height - panelHeight) / 2
+    UI.drawPanel(panelX, panelY, panelWidth, panelHeight)
+
+    UI.setColor("accent")
+    UI.setFont(self.completed and 37 or 48, width, height)
+    love.graphics.printf(self.completed and "ALL LEVELS COMPLETE" or "PAUSED",
+        panelX + 20 * scale, panelY + 25 * scale, panelWidth - 40 * scale, "center")
+    UI.drawDivider(panelX + 28 * scale, panelY + 91 * scale, panelWidth - 56 * scale)
+
+    local options = self:getPauseOptions()
+    local rowHeight = 54 * scale
+    local firstRowY = panelY + 109 * scale
     for index, label in ipairs(options) do
-        love.graphics.printf((index == self.pauseSelection and "> " or "  ") .. label, 0, height * 0.38 + (index - 1) * 32, width, "center")
+        local y = firstRowY + (index - 1) * rowHeight
+        if index == self.pauseSelection then
+            UI.drawSelection(panelX + 22 * scale, y - 4 * scale, panelWidth - 44 * scale, 47 * scale)
+        end
+        UI.setColor(index == self.pauseSelection and "accent" or "text")
+        UI.setFont(30, width, height)
+        love.graphics.print((index == self.pauseSelection and "> " or "  ") .. label,
+            panelX + 48 * scale, y)
     end
+
+end
+
+function Playing:getPauseOptions()
+    if self.completed then return {"Replay level", "Level select", "Quit"} end
+    return {"Resume", "Restart level", "Level select", "Quit"}
 end
 
 function Playing:choosePauseOption()
+    if self.completed then
+        if self.pauseSelection == 1 then
+            self:loadLevel()
+            self.paused, self.completed = false, false
+        elseif self.pauseSelection == 2 then
+            self.game.scenes:switch("levels")
+        else
+            love.event.quit()
+        end
+        return
+    end
     if self.pauseSelection == 1 then
         self.paused, self.completed = false, false
     elseif self.pauseSelection == 2 then
@@ -223,10 +262,13 @@ end
 
 function Playing:keypressed(key)
     if self.paused then
-        if Keymap.matches("menuUp", key) then self.pauseSelection = (self.pauseSelection - 2) % 4 + 1
-        elseif Keymap.matches("menuDown", key) then self.pauseSelection = self.pauseSelection % 4 + 1
+        local optionCount = #self:getPauseOptions()
+        if Keymap.matches("menuUp", key) then self.pauseSelection = (self.pauseSelection - 2) % optionCount + 1
+        elseif Keymap.matches("menuDown", key) then self.pauseSelection = self.pauseSelection % optionCount + 1
         elseif Keymap.matches("confirm", key) then self:choosePauseOption()
-        elseif Keymap.matches("cancel", key) and not self.completed then self.paused = false end
+        elseif Keymap.matches("cancel", key) then
+            if self.completed then self.game.scenes:switch("levels") else self.paused = false end
+        end
         return
     end
     if Keymap.matches("pause", key) then

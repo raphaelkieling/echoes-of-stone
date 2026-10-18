@@ -1,4 +1,4 @@
--- Set to false in the release build to remove the developer console and its commands.
+-- Set to false in release builds to remove developer-only tools and UI.
 return {
-    devConsoleEnabled = true,
+    developmentMode = true,
 }

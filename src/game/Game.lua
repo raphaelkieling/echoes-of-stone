@@ -17,7 +17,7 @@ function Game.new()
     self.scenes = SceneManager(self)
     self.crt = CRT()
     self.completedLevels = {}
-    if BuildConfig.devConsoleEnabled then
+    if BuildConfig.developmentMode then
         local Console = require("src.dev.Console")
         local ConsoleCommands = require("src.dev.ConsoleCommands")
         self.console = Console.new()

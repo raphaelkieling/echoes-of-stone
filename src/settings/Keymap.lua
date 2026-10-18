@@ -43,9 +43,4 @@ function Keymap.direction(key)
     end
 end
 
-function Keymap.gameplayHint()
-    return string.format("%s move, %s switch, %s undo, L map view, %s menu",
-        Keymap.labels.move, Keymap.labels.switchPlayer, Keymap.labels.undo, Keymap.labels.pause)
-end
-
 return Keymap
