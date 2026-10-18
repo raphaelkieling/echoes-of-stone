@@ -17,11 +17,10 @@ function LevelLoader.listLevels()
     local tiledLevels = {}
     local textLevels = {}
     for _, file in ipairs(files) do
-        local tiledNumber = file:match("(%d+)[^%d]*%.tmj$")
-        if tiledNumber then
+        if file:match("%.tmj$") then
             local name = file:gsub("%.tmj$", ""):gsub("%.tmx$", "")
             tiledLevels[#tiledLevels + 1] = {
-                number = tonumber(tiledNumber),
+                number = tonumber(name:match("(%d+)$")),
                 name = name,
                 path = "maps/" .. file,
             }
@@ -37,7 +36,9 @@ function LevelLoader.listLevels()
     end
     local levels = #tiledLevels > 0 and tiledLevels or textLevels
     table.sort(levels, function(a, b)
-        return a.number < b.number
+        if a.number and b.number then return a.number < b.number end
+        if a.number ~= b.number then return a.number ~= nil end
+        return a.name < b.name
     end)
     return levels
 end

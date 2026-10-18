@@ -64,6 +64,20 @@
         },
         "level2.tmj#tiles": {
             "scaleInDock": 1
+        },
+        "level3.tmj": {
+            "expandedObjectLayers": [
+                6
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 254,
+                "y": 203
+            }
+        },
+        "level3.tmj#tiles": {
+            "scaleInDock": 1
         }
     },
     "openFiles": [

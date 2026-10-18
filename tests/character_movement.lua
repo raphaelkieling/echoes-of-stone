@@ -158,14 +158,15 @@ function tests.telekinetic_pushes_the_first_object_one_cell()
     assertPosition(box, 5, 0)
 end
 
-function tests.telekinetic_does_not_move_object_into_blocker()
+function tests.telekinetic_walks_forward_when_a_distant_push_is_blocked()
     local board = makeBoard(0, 5, 0)
     local telekinetic = spawnPlayer(board, 1, 0, Player.Classes.TELEKINETIC)
     local box = spawnBox(board, 3, 0)
-    spawnBox(board, 4, 0)
-    assert(not run(board, telekinetic, {x = 1, y = 0}))
-    assertPosition(telekinetic, 1, 0)
+    local blocker = spawnBox(board, 4, 0)
+    assert(run(board, telekinetic, {x = 1, y = 0}))
+    assertPosition(telekinetic, 2, 0)
     assertPosition(box, 3, 0)
+    assertPosition(blocker, 4, 0)
 end
 
 function tests.sorcerer_pulls_a_distant_object_back()
@@ -195,15 +196,15 @@ function tests.sorcerer_cannot_pull_onto_its_destination()
     assertPosition(box, 3, 0)
 end
 
-function tests.pushed_wizard_uses_swap_and_leaves_pusher_blocked()
+function tests.pushed_wizard_moves_as_a_block_without_using_its_ability()
     local board = makeBoard(0, 5, 0)
     local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
     local wizard = spawnPlayer(board, 2, 0, Player.Classes.WIZARD)
     local box = spawnBox(board, 4, 0)
     assert(run(board, dwarf, {x = 1, y = 0}))
-    assertPosition(dwarf, 1, 0)
-    assertPosition(wizard, 4, 0)
-    assertPosition(box, 2, 0)
+    assertPosition(dwarf, 2, 0)
+    assertPosition(wizard, 3, 0)
+    assertPosition(box, 4, 0)
 end
 
 function tests.pushed_wizard_with_clear_ray_walks_and_pusher_follows()
@@ -215,7 +216,7 @@ function tests.pushed_wizard_with_clear_ray_walks_and_pusher_follows()
     assertPosition(wizard, 3, 0)
 end
 
-function tests.pushing_a_player_through_a_box_chain_uses_their_ability()
+function tests.pushing_a_player_through_a_box_chain_does_not_use_their_ability()
     local board = makeBoard(0, 5, 0)
     local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
     local box = spawnBox(board, 2, 0)
@@ -224,6 +225,46 @@ function tests.pushing_a_player_through_a_box_chain_uses_their_ability()
     assertPosition(dwarf, 2, 0)
     assertPosition(box, 3, 0)
     assertPosition(wizard, 4, 0)
+end
+
+function tests.telekinetic_walks_forward_if_a_distant_box_cannot_move()
+    local board = makeBoard(0, 6, 0, {[6] = true})
+    local telekinetic = spawnPlayer(board, 1, 0, Player.Classes.TELEKINETIC)
+    local box = spawnBox(board, 5, 0)
+    assert(run(board, telekinetic, {x = 1, y = 0}))
+    assertPosition(telekinetic, 2, 0)
+    assertPosition(box, 5, 0)
+end
+
+function tests.telekinetic_pushes_a_player_as_a_block()
+    local board = makeBoard(0, 7, 0)
+    local telekinetic = spawnPlayer(board, 1, 0, Player.Classes.TELEKINETIC)
+    local wizard = spawnPlayer(board, 4, 0, Player.Classes.WIZARD)
+    local box = spawnBox(board, 6, 0)
+    assert(run(board, telekinetic, {x = 1, y = 0}))
+    assertPosition(telekinetic, 2, 0)
+    assertPosition(wizard, 5, 0)
+    assertPosition(box, 6, 0)
+end
+
+function tests.sorcerer_pulls_a_player_as_a_block()
+    local board = makeBoard(0, 5, 0)
+    local sorcerer = spawnPlayer(board, 1, 0, Player.Classes.SORCERER)
+    local wizard = spawnPlayer(board, 4, 0, Player.Classes.WIZARD)
+    assert(run(board, sorcerer, {x = 1, y = 0}))
+    assertPosition(sorcerer, 2, 0)
+    assertPosition(wizard, 3, 0)
+end
+
+function tests.warrior_pushes_a_player_and_box_chain_without_using_player_abilities()
+    local board = makeBoard(0, 7, 0)
+    local warrior = spawnPlayer(board, 1, 0, Player.Classes.WARRIOR)
+    local wizard = spawnPlayer(board, 2, 0, Player.Classes.WIZARD)
+    local box = spawnBox(board, 3, 0)
+    assert(run(board, warrior, {x = 1, y = 0}))
+    assertPosition(warrior, 2, 0)
+    assertPosition(wizard, 6, 0)
+    assertPosition(box, 7, 0)
 end
 
 return tests

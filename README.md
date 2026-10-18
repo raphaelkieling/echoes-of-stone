@@ -1,4 +1,4 @@
-# Sokoban
+# Echos of Stone
 
 ## Game
 

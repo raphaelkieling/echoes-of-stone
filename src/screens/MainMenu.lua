@@ -3,15 +3,23 @@ MainMenu.__index = MainMenu
 local Keymap = require("src.settings.Keymap")
 
 function MainMenu.new(game)
-    return setmetatable({game = game, selected = 1, options = {"Start", "Quit"}}, MainMenu)
+    return setmetatable({
+        game = game,
+        selected = 1,
+        options = {"Start", "Quit"},
+        titleFont = love.graphics.newFont(64),
+        optionFont = love.graphics.newFont(22),
+    }, MainMenu)
 end
 
 function MainMenu:draw()
     local width, height = love.graphics.getDimensions()
     love.graphics.setColor(0.93, 0.93, 0.9, 1)
-    love.graphics.printf("SOKOBAN", 0, height * 0.25, width, "center")
+    love.graphics.setFont(self.titleFont)
+    love.graphics.printf("ECHOES OF STONE", 0, height * 0.2, width, "center")
+    love.graphics.setFont(self.optionFont)
     for index, label in ipairs(self.options) do
-        local y = height - 120 + (index - 1) * 32
+        local y = height - 126 + (index - 1) * 42
         love.graphics.printf((index == self.selected and "> " or "  ") .. label, 24, y, 180, "left")
     end
 end

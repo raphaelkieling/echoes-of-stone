@@ -1,0 +1,340 @@
+{ "compressionlevel":-1,
+ "height":20,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 18, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 18, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 222, 222, 222, 222, 222, 222, 240, 222, 222, 222, 222, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 18, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 18, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 240, 222, 222, 222, 222, 222, 222, 240, 222, 222, 18, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 240, 18, 0, 0, 0, 0,
+            0, 18, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 0, 0, 0, 0,
+            0, 18, 18, 222, 222, 222, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":20,
+         "id":1,
+         "name":"Ground",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":20,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 86, 87, 87, 412, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 86, 0, 0, 0, 0,
+            0, 86, 0, 0, 429, 0, 0, 0, 0, 0, 0, 0, 359, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 0, 294, 0, 0, 294, 0, 0, 0, 294, 0, 0, 294, 0, 86, 0, 0, 0, 0,
+            0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 86, 376, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 0,
+            0, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":20,
+         "id":5,
+         "name":"Decoration",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":20,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":6,
+         "name":"Entities",
+         "objects":[
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"Player",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"characterClass",
+                         "type":"string",
+                         "value":"dwarf"
+                        }, 
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"player"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":144,
+                 "y":304
+                }, 
+                {
+                 "height":0,
+                 "id":7,
+                 "name":"Player",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"characterClass",
+                         "type":"string",
+                         "value":"wizard"
+                        }, 
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"player"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":208,
+                 "y":304
+                }, 
+                {
+                 "height":0,
+                 "id":8,
+                 "name":"Player",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"characterClass",
+                         "type":"string",
+                         "value":"warrior"
+                        }, 
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"player"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":272,
+                 "y":304
+                }, 
+                {
+                 "height":0,
+                 "id":9,
+                 "name":"Player",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"characterClass",
+                         "type":"string",
+                         "value":"telekinetic"
+                        }, 
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"player"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":336,
+                 "y":304
+                }, 
+                {
+                 "height":0,
+                 "id":10,
+                 "name":"Player",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"characterClass",
+                         "type":"string",
+                         "value":"sorcerer"
+                        }, 
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"player"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":400,
+                 "y":304
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":7,
+ "nextobjectid":11,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.12.2",
+ "tileheight":32,
+ "tilesets":[
+        {
+         "columns":17,
+         "firstgid":1,
+         "image":"..\/assets\/tiles.png",
+         "imageheight":832,
+         "imagewidth":544,
+         "margin":0,
+         "name":"tiles",
+         "spacing":0,
+         "tilecount":442,
+         "tileheight":32,
+         "tiles":[
+                {
+                 "id":1,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":17,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":18,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":85,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":86,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":281,
+                 "properties":[
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"target"
+                        }]
+                }, 
+                {
+                 "id":293,
+                 "properties":[
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"box"
+                        }]
+                }, 
+                {
+                 "id":306,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":307,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":425,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":426,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":427,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }, 
+                {
+                 "id":428,
+                 "properties":[
+                        {
+                         "name":"solid",
+                         "type":"bool",
+                         "value":true
+                        }]
+                }],
+         "tilewidth":32
+        }],
+ "tilewidth":32,
+ "type":"map",
+ "version":"1.10",
+ "width":20
+}

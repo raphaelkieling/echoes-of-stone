@@ -16,7 +16,7 @@ end
 function Playing:enter(levelIndex)
     self.levels = LevelLoader.listLevels()
     self.levelIndex = levelIndex or 1
-    self.cameraMode = "follow"
+    self.cameraMode = "map"
     self:loadLevel()
     self.paused = false
     self.pauseSelection = 1
