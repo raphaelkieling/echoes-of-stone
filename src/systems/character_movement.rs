@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::components::{
-    BoxObject, Floor, GridPosition, InteractiveObject, Player, PlayerClass, Wall,
+    Floor, GridMovementTween, GridPosition, InteractiveObject, Player, PlayerClass, Wall,
 };
 use crate::resources::{ActionCompensation, ActionHistory, EntitySnapshot};
 use crate::systems::{level_spawner::TILE_SIZE, PlayerMoveEvent};
@@ -24,12 +24,13 @@ type CellQuery<'w, 's> = Query<
 /// Dwarves and warriors push chains; wizards swap with a distant object, while
 /// telekinetics push the first object in their direction without moving to it.
 pub fn character_movement_system(
+    mut commands: Commands,
     mut move_events: EventReader<PlayerMoveEvent>,
     mut action_history: ResMut<ActionHistory>,
     mut queries: ParamSet<(
-        Query<(Entity, &mut GridPosition, &mut Transform, &Player)>,
+        Query<(Entity, &mut GridPosition, &Transform, &Player)>,
         CellQuery,
-        Query<(&mut GridPosition, &mut Transform), With<InteractiveObject>>,
+        Query<(&mut GridPosition, &Transform), With<InteractiveObject>>,
     )>,
 ) {
     for PlayerMoveEvent { player, direction } in move_events.read().copied() {
@@ -88,11 +89,16 @@ pub fn character_movement_system(
                     let displacement = direction * push_distance;
                     for object in chain.iter().rev() {
                         let mut objects = queries.p2();
-                        let Ok((mut position, mut transform)) = objects.get_mut(object.entity)
-                        else {
+                        let Ok((mut position, transform)) = objects.get_mut(object.entity) else {
                             continue;
                         };
-                        translate(&mut position, &mut transform, displacement);
+                        translate(
+                            &mut commands,
+                            object.entity,
+                            &mut position,
+                            &transform,
+                            displacement,
+                        );
                     }
                     destination
                 }
@@ -103,10 +109,16 @@ pub fn character_movement_system(
                 {
                     snapshots.push(object.clone());
                     let mut objects = queries.p2();
-                    let Ok((mut position, mut transform)) = objects.get_mut(object.entity) else {
+                    let Ok((mut position, transform)) = objects.get_mut(object.entity) else {
                         continue;
                     };
-                    set_position(&mut position, &mut transform, player_before.grid_position);
+                    set_position(
+                        &mut commands,
+                        object.entity,
+                        &mut position,
+                        &transform,
+                        player_before.grid_position,
+                    );
                     object.grid_position
                 } else {
                     destination
@@ -128,10 +140,16 @@ pub fn character_movement_system(
 
                     snapshots.push(object.clone());
                     let mut objects = queries.p2();
-                    let Ok((mut position, mut transform)) = objects.get_mut(object.entity) else {
+                    let Ok((mut position, transform)) = objects.get_mut(object.entity) else {
                         continue;
                     };
-                    translate(&mut position, &mut transform, direction);
+                    translate(
+                        &mut commands,
+                        object.entity,
+                        &mut position,
+                        &transform,
+                        direction,
+                    );
                 }
                 destination
             }
@@ -153,10 +171,16 @@ pub fn character_movement_system(
 
                     snapshots.push(object.clone());
                     let mut objects = queries.p2();
-                    let Ok((mut position, mut transform)) = objects.get_mut(object.entity) else {
+                    let Ok((mut position, transform)) = objects.get_mut(object.entity) else {
                         continue;
                     };
-                    translate(&mut position, &mut transform, -direction);
+                    translate(
+                        &mut commands,
+                        object.entity,
+                        &mut position,
+                        &transform,
+                        -direction,
+                    );
                 }
                 destination
             }
@@ -164,10 +188,16 @@ pub fn character_movement_system(
 
         {
             let mut players = queries.p0();
-            let Ok((_, mut position, mut transform, _)) = players.get_mut(player) else {
+            let Ok((entity, mut position, transform, _)) = players.get_mut(player) else {
                 continue;
             };
-            set_position(&mut position, &mut transform, player_destination);
+            set_position(
+                &mut commands,
+                entity,
+                &mut position,
+                &transform,
+                player_destination,
+            );
         }
         action_history.record(ActionCompensation { snapshots });
     }
@@ -301,21 +331,51 @@ fn offset(position: GridPosition, direction: IVec2) -> GridPosition {
     }
 }
 
-fn translate(position: &mut GridPosition, transform: &mut Transform, displacement: IVec2) {
-    set_position(position, transform, offset(*position, displacement));
+fn translate(
+    commands: &mut Commands,
+    entity: Entity,
+    position: &mut GridPosition,
+    transform: &Transform,
+    displacement: IVec2,
+) {
+    set_position(
+        commands,
+        entity,
+        position,
+        transform,
+        offset(*position, displacement),
+    );
 }
 
-fn set_position(position: &mut GridPosition, transform: &mut Transform, target: GridPosition) {
+fn set_position(
+    commands: &mut Commands,
+    entity: Entity,
+    position: &mut GridPosition,
+    transform: &Transform,
+    target: GridPosition,
+) {
     let delta_x = target.x - position.x;
     let delta_y = target.y - position.y;
+    if delta_x == 0 && delta_y == 0 {
+        return;
+    }
+
+    let start_translation = transform.translation;
+    let end_translation =
+        start_translation + Vec3::new(delta_x as f32 * TILE_SIZE, delta_y as f32 * TILE_SIZE, 0.0);
+    let grid_distance = delta_x.abs().max(delta_y.abs()) as u32;
     *position = target;
-    transform.translation += Vec3::new(delta_x as f32 * TILE_SIZE, delta_y as f32 * TILE_SIZE, 0.0);
+    commands.entity(entity).insert(GridMovementTween::new(
+        start_translation,
+        end_translation,
+        grid_distance,
+    ));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::components::Floor;
+    use crate::components::{BoxObject, Floor};
 
     fn test_app() -> App {
         let mut app = App::new();
@@ -391,13 +451,13 @@ mod tests {
             .expect("entity should have a grid position")
     }
 
-    fn translation_of(app: &mut App, entity: Entity) -> Vec3 {
+    fn tween_target_of(app: &mut App, entity: Entity) -> Vec3 {
         let world = app.world_mut();
-        let mut query = world.query::<&Transform>();
+        let mut query = world.query::<&GridMovementTween>();
         query
             .get(world, entity)
-            .expect("entity should have a transform")
-            .translation
+            .expect("entity should have a movement tween")
+            .end_translation
     }
 
     fn history_snapshot_count(app: &mut App) -> usize {
@@ -416,7 +476,7 @@ mod tests {
         move_player(&mut app, dwarf, IVec2::X);
 
         assert_eq!(position_of(&mut app, dwarf), position(2, 0));
-        assert_eq!(translation_of(&mut app, dwarf).x, 2.0 * TILE_SIZE);
+        assert_eq!(tween_target_of(&mut app, dwarf).x, 2.0 * TILE_SIZE);
         assert_eq!(history_snapshot_count(&mut app), 1);
     }
 
@@ -431,7 +491,7 @@ mod tests {
 
         assert_eq!(position_of(&mut app, dwarf), position(2, 0));
         assert_eq!(position_of(&mut app, box_entity), position(3, 0));
-        assert_eq!(translation_of(&mut app, box_entity).x, 3.0 * TILE_SIZE);
+        assert_eq!(tween_target_of(&mut app, box_entity).x, 3.0 * TILE_SIZE);
         assert_eq!(history_snapshot_count(&mut app), 2);
     }
 
@@ -462,7 +522,7 @@ mod tests {
         assert_eq!(position_of(&mut app, dwarf), position(2, 0));
         assert_eq!(position_of(&mut app, first_box), position(3, 0));
         assert_eq!(position_of(&mut app, second_box), position(4, 0));
-        assert_eq!(translation_of(&mut app, first_box).x, 3.0 * TILE_SIZE);
+        assert_eq!(tween_target_of(&mut app, first_box).x, 3.0 * TILE_SIZE);
         let compensation = app
             .world_mut()
             .resource_mut::<ActionHistory>()
@@ -563,8 +623,8 @@ mod tests {
 
         assert_eq!(position_of(&mut app, wizard), position(4, 0));
         assert_eq!(position_of(&mut app, box_entity), position(1, 0));
-        assert_eq!(translation_of(&mut app, wizard).x, 4.0 * TILE_SIZE);
-        assert_eq!(translation_of(&mut app, box_entity).x, 1.0 * TILE_SIZE);
+        assert_eq!(tween_target_of(&mut app, wizard).x, 4.0 * TILE_SIZE);
+        assert_eq!(tween_target_of(&mut app, box_entity).x, 1.0 * TILE_SIZE);
         assert_eq!(history_snapshot_count(&mut app), 2);
     }
 

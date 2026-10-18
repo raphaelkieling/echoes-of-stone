@@ -22,19 +22,24 @@ fn main() {
         .add_systems(
             Update,
             (
-                systems::switch_active_player_system,
-                systems::player_movement_system,
-                systems::character_movement_system,
-                systems::undo_system,
-                systems::check_level_win_system,
-                systems::begin_level_transition_system,
-                systems::animate_level_transition_system,
-                systems::advance_level_system,
-                systems::spawn_player_outline_system,
-                systems::active_player_outline_system,
+                (
+                    systems::switch_active_player_system,
+                    systems::player_movement_system,
+                    systems::character_movement_system,
+                    systems::undo_system,
+                    systems::check_level_win_system,
+                    systems::begin_level_transition_system,
+                    systems::animate_level_transition_system,
+                    systems::advance_level_system,
+                    systems::spawn_player_outline_system,
+                    systems::active_player_outline_system,
+                )
+                    .chain()
+                    .run_if(screens::gameplay_is_active),
+                systems::animate_grid_movement_system
+                    .run_if(in_state(screens::GameScreen::Playing)),
             )
-                .chain()
-                .run_if(screens::gameplay_is_active),
+                .chain(),
         )
         .add_plugins(screens::GameScreensPlugin);
 

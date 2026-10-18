@@ -1,6 +1,7 @@
 pub mod character_movement;
 pub mod level_progression;
 pub mod level_spawner;
+pub mod movement_animation;
 pub mod player_movement;
 pub mod player_outline;
 pub mod player_selection;
@@ -12,6 +13,7 @@ pub use level_progression::{
     check_level_win_system, setup_transition_overlay, LevelTransition, LevelWin, BASE_CAMERA_SCALE,
 };
 pub use level_spawner::{load_levels, spawn_level, LevelHandle};
+pub use movement_animation::animate_grid_movement_system;
 pub use player_movement::{player_movement_system, PlayerMoveEvent};
 pub use player_outline::{
     active_player_outline_system, spawn_player_outline_system, PlayerOutlineTextures,

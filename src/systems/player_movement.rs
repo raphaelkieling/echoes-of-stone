@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::components::GridMovementTween;
 use crate::resources::PlayerSelection;
 use crate::systems::LevelTransition;
 
@@ -15,6 +16,7 @@ pub fn player_movement_system(
     mut move_events: EventWriter<PlayerMoveEvent>,
     selection: Res<PlayerSelection>,
     transition: Res<LevelTransition>,
+    moving_entities: Query<(), With<GridMovementTween>>,
 ) {
     if transition.is_active()
         || keyboard.just_pressed(KeyCode::KeyG)
@@ -24,6 +26,10 @@ pub fn player_movement_system(
     }
 
     if keyboard.just_pressed(KeyCode::KeyZ) {
+        return;
+    }
+
+    if !moving_entities.is_empty() {
         return;
     }
 
