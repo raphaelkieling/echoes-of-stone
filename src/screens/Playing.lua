@@ -80,6 +80,7 @@ function Playing:currentPlayer()
 end
 
 function Playing:advanceLevel()
+    self.game.completedLevels[self.levelPath] = true
     if self.levelIndex < #self.levels then
         self.levelIndex = self.levelIndex + 1
         self:loadLevel()
@@ -155,6 +156,42 @@ function Playing:draw()
         love.graphics.setColor(0, 0, 0, alpha * 0.35)
         love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
     end
+    self:drawLevelTimeline()
+end
+
+function Playing:drawLevelTimeline()
+    local count = #self.levels
+    if count == 0 then return end
+
+    local width, height = love.graphics.getDimensions()
+    local availableWidth = math.max(0, width - 64)
+    local spacing = count > 1 and math.min(28, availableWidth / (count - 1)) or 0
+    local firstX = (width - spacing * (count - 1)) / 2
+    local y = height - 26
+    local radius = math.min(6, spacing > 0 and spacing * 0.24 or 6)
+
+    love.graphics.push("all")
+    if count > 1 then
+        love.graphics.setColor(0.38, 0.42, 0.5, 0.85)
+        love.graphics.setLineWidth(3)
+        love.graphics.line(firstX, y, firstX + spacing * (count - 1), y)
+    end
+
+    for index, level in ipairs(self.levels) do
+        local x = firstX + spacing * (index - 1)
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.circle("fill", x, y, radius + 2)
+        if self.game.completedLevels[level.path] then
+            love.graphics.setColor(0.55, 0.86, 1, 1)
+            love.graphics.circle("fill", x, y, radius)
+        else
+            local alpha = index == self.levelIndex and 1 or 0.58
+            love.graphics.setColor(0.88, 0.9, 0.94, alpha)
+            love.graphics.setLineWidth(2)
+            love.graphics.circle("line", x, y, radius)
+        end
+    end
+    love.graphics.pop()
 end
 
 function Playing:drawPause()

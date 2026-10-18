@@ -84,7 +84,7 @@
         },
         "level4.tmj": {
             "scale": 2,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
                 "x": 204.75,
                 "y": 189.5
