@@ -1,4 +1,8 @@
-# Echos of Stone
+# Echoes of Stone
+
+A fantasy Sokoban puzzle where heroes use unique abilities to move blocks and reach each level's goals.
+
+![Gameplay screenshot](docs/Screenshot%202026-10-18%20at%2005.20.01.png)
 
 ## Game
 
@@ -27,5 +31,5 @@ Press the grave/tilde key (` or ~) to open or close the in-game console. Use `Ta
 - `help` lists registered commands.
 
 Commands are registered in `src/dev/ConsoleCommands.lua`. To remove the console
-from a production build, set `devConsoleEnabled` to `false` in
+and other developer UI from a production build, set `developmentMode` to `false` in
 `src/settings/BuildConfig.lua`.
