@@ -53,6 +53,7 @@ end
 
 function About:keypressed(key)
     if Keymap.matches("cancel", key) or Keymap.matches("confirm", key) then
+        self.game.audio:play("uiClick")
         self.game.scenes:switch("menu")
     end
 end

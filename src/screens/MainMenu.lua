@@ -46,7 +46,9 @@ function MainMenu:keypressed(key)
         else
             self.selected = self.selected % #self.options + 1
         end
+        self.game.audio:play("uiClick")
     elseif Keymap.matches("confirm", key) then
+        self.game.audio:play("uiClick")
         if self.selected == 1 then
             self.game.scenes:switch("levels")
         elseif self.selected == 2 then

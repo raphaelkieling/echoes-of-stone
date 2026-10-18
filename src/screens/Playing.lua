@@ -15,6 +15,27 @@ local CAMERA_SMOOTHING = 9
 local MOVE_REPEAT_DELAY = 0.3
 local MOVE_REPEAT_INTERVAL = 0.12
 
+local function boxesOnTargets(board)
+	local boxes = {}
+	for _, box in ipairs(board.boxes) do
+		local transform = box:getComponent("Transform")
+		local cell = board:getCell(transform.gridX, transform.gridY)
+		if cell and cell.target then boxes[box] = true end
+	end
+	return boxes
+end
+
+local function hasBoxArrivedOnTarget(board, previousBoxesOnTargets)
+	for _, box in ipairs(board.boxes) do
+		if not previousBoxesOnTargets[box] then
+			local transform = box:getComponent("Transform")
+			local cell = board:getCell(transform.gridX, transform.gridY)
+			if cell and cell.target then return true end
+		end
+	end
+	return false
+end
+
 function Playing.new(game)
     return setmetatable({
         game = game,
@@ -123,8 +144,21 @@ end
 
 function Playing:movePlayer(direction)
 	local player = self:currentPlayer()
-	return player and CharacterMovement.move(self.board, player, direction,
-		self.history, self.movementEffects) or false
+	if not player then return false end
+	local previousBoxesOnTargets = boxesOnTargets(self.board)
+	local moved = CharacterMovement.move(self.board, player, direction,
+		self.history, self.movementEffects)
+	self.game.audio:play(moved and "move" or "invalidMovement")
+	if moved and hasBoxArrivedOnTarget(self.board, previousBoxesOnTargets) then
+		self.game.audio:play("target")
+	end
+	return moved
+end
+
+function Playing:undo()
+	local undone = self.history:undo()
+	if undone then self.game.audio:play("undo") end
+	return undone
 end
 
 function Playing:updateBufferedMovement()
@@ -217,6 +251,11 @@ function Playing:draw()
 end
 
 function Playing:mobileAction(action)
+	if action == "b" and not self.paused then
+		if not self.board:isMoving() and not self.transition then self:undo() end
+		return
+	end
+	self.game.audio:play("uiClick")
 	if action == "a" then
 		if self.paused then
 			self:choosePauseOption()
@@ -230,8 +269,6 @@ function Playing:mobileAction(action)
 			else
 				self.paused = false
 			end
-		elseif not self.board:isMoving() and not self.transition then
-			self.history:undo()
 		end
 	end
 end
@@ -357,10 +394,17 @@ end
 function Playing:keypressed(key)
     if self.paused then
         local optionCount = #self:getPauseOptions()
-        if Keymap.matches("menuUp", key) then self.pauseSelection = (self.pauseSelection - 2) % optionCount + 1
-        elseif Keymap.matches("menuDown", key) then self.pauseSelection = self.pauseSelection % optionCount + 1
-        elseif Keymap.matches("confirm", key) then self:choosePauseOption()
+        if Keymap.matches("menuUp", key) then
+            self.pauseSelection = (self.pauseSelection - 2) % optionCount + 1
+            self.game.audio:play("uiClick")
+        elseif Keymap.matches("menuDown", key) then
+            self.pauseSelection = self.pauseSelection % optionCount + 1
+            self.game.audio:play("uiClick")
+        elseif Keymap.matches("confirm", key) then
+            self.game.audio:play("uiClick")
+            self:choosePauseOption()
         elseif Keymap.matches("cancel", key) then
+            self.game.audio:play("uiClick")
             if self.completed then self.game.scenes:switch("levels") else self.paused = false end
         end
         return
@@ -368,6 +412,7 @@ function Playing:keypressed(key)
     if Keymap.matches("pause", key) then
 		self:clearHeldMovement()
         self.paused, self.pauseSelection = true, 1
+        self.game.audio:play("uiClick")
         return
     end
     if Keymap.matches("toggleMapView", key) then
@@ -391,7 +436,7 @@ function Playing:keypressed(key)
     if Keymap.matches("switchPlayer", key) then
         if #self.board.players > 0 then self.activeIndex = self.activeIndex % #self.board.players + 1 end
     elseif Keymap.matches("undo", key) then
-        self.history:undo()
+		self:undo()
     end
 end
 

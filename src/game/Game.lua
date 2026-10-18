@@ -8,6 +8,7 @@ local Playing = require("src.screens.Playing")
 local Fonts = require("src.ui.Fonts")
 local BuildConfig = require("src.settings.BuildConfig")
 local MobileControls = require("src.input.MobileControls")
+local AudioManager = require("src.audio.AudioManager")
 
 local Game = {}
 Game.__index = Game
@@ -16,6 +17,7 @@ function Game.new()
     local self = setmetatable({}, Game)
     self.assets = Assets.new()
     self.mobileControls = MobileControls.new()
+    self.audio = AudioManager.new()
     self.scenes = SceneManager(self)
     self.crt = CRT()
     self.completedLevels = {}

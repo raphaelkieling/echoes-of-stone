@@ -44,13 +44,17 @@ end
 
 function LevelSelect:keypressed(key)
     if Keymap.matches("cancel", key) then
+        self.game.audio:play("uiClick")
         self.game.scenes:switch("menu")
     elseif Keymap.matches("menuUp", key) then
         self.selected = (self.selected - 2) % #self.levels + 1
+        self.game.audio:play("uiClick")
     elseif Keymap.matches("menuDown", key) then
         self.selected = self.selected % #self.levels + 1
+        self.game.audio:play("uiClick")
     elseif Keymap.matches("confirm", key) then
         if self.levels[self.selected] then
+            self.game.audio:play("uiClick")
             self.game.scenes:switch("playing", self.selected)
         end
     end

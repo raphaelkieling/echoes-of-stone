@@ -26,3 +26,4 @@ lua tests/run.lua
 - `src/game/MovementSession.lua` provides shared grid and collision helpers. `CharacterMovement.lua` commits moves and records undo.
 - Player states live in `src/characters/states/` and are registered in `PlayerStates.lua`. `Walking` and `Pushing` share `MovementState`, which handles movement presentation effects; idle-only presentation, such as the subtle sway, belongs in `Idle.lua`.
 - To add a character class, create its class file and register it in `src/characters/Classes.lua`.
+- Generated move, blocked-move, undo, target, and UI sounds are configured in `src/audio/SoundCatalog.lua`; set a sound's `file` path there to replace its synthesized version without changing gameplay code.
