@@ -135,6 +135,31 @@ pub fn character_movement_system(
                 }
                 destination
             }
+            PlayerClass::Sorcerer => {
+                if let Some(object) =
+                    first_object_in_ray(destination, direction, player, &queries.p1())
+                {
+                    // A directly adjacent object cannot retreat without colliding with its owner.
+                    if object.grid_position == destination {
+                        continue;
+                    }
+
+                    let recoil_destination = offset(object.grid_position, -direction);
+                    if recoil_destination == destination
+                        || !can_push_into(recoil_destination, player, &queries.p1())
+                    {
+                        continue;
+                    }
+
+                    snapshots.push(object.clone());
+                    let mut objects = queries.p2();
+                    let Ok((mut position, mut transform)) = objects.get_mut(object.entity) else {
+                        continue;
+                    };
+                    translate(&mut position, &mut transform, -direction);
+                }
+                destination
+            }
         };
 
         {
@@ -569,5 +594,47 @@ mod tests {
         assert_eq!(position_of(&mut app, wizard), position(2, 0));
         assert_eq!(position_of(&mut app, box_entity), position(4, 0));
         assert_eq!(history_snapshot_count(&mut app), 1);
+    }
+
+    #[test]
+    fn sorcerer_pulls_a_distant_box_against_their_movement() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 6, 0);
+        let sorcerer = spawn_player(&mut app, 1, 0, PlayerClass::Sorcerer);
+        let box_entity = spawn_box(&mut app, 4, 0);
+
+        move_player(&mut app, sorcerer, IVec2::X);
+
+        assert_eq!(position_of(&mut app, sorcerer), position(2, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(3, 0));
+        assert_eq!(history_snapshot_count(&mut app), 2);
+    }
+
+    #[test]
+    fn sorcerer_cannot_move_when_the_box_is_adjacent() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let sorcerer = spawn_player(&mut app, 1, 0, PlayerClass::Sorcerer);
+        let box_entity = spawn_box(&mut app, 2, 0);
+
+        move_player(&mut app, sorcerer, IVec2::X);
+
+        assert_eq!(position_of(&mut app, sorcerer), position(1, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(2, 0));
+        assert_eq!(history_snapshot_count(&mut app), 0);
+    }
+
+    #[test]
+    fn sorcerer_cannot_pull_a_box_onto_their_destination() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let sorcerer = spawn_player(&mut app, 1, 0, PlayerClass::Sorcerer);
+        let box_entity = spawn_box(&mut app, 3, 0);
+
+        move_player(&mut app, sorcerer, IVec2::X);
+
+        assert_eq!(position_of(&mut app, sorcerer), position(1, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(3, 0));
+        assert_eq!(history_snapshot_count(&mut app), 0);
     }
 }

@@ -1,5 +1,6 @@
 WWWWWWWW
+W     #W
+W 5 F  W
 W      W
-W 3# F W
 W      W
 WWWWWWWW

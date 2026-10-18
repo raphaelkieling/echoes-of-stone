@@ -28,6 +28,7 @@ const DWARF_FRAME_INDEX: usize = 0; // source frame (0, 0)
 const TELEKINETIC_FRAME_INDEX: usize = 2; // source frame (2, 0)
 const WIZARD_FRAME_INDEX: usize = 4 * PLAYER_FRAME_COLUMNS as usize + 1; // source frame (1, 4)
 const WARRIOR_FRAME_INDEX: usize = PLAYER_FRAME_COLUMNS as usize + 4; // source frame (4, 1)
+const SORCERER_FRAME_INDEX: usize = 4 * PLAYER_FRAME_COLUMNS as usize + 3; // source frame (3, 4)
 pub const PLAYER_DISPLAY_SIZE: f32 = 72.0;
 
 #[derive(Resource, Clone)]
@@ -223,12 +224,13 @@ pub(crate) fn spawn_level_contents(
                         grid_position,
                     ));
                 }
-                '1' | '2' | '3' | '4' => {
+                '1' | '2' | '3' | '4' | '5' => {
                     let (class, frame_index) = match ch {
                         '1' => (PlayerClass::Dwarf, DWARF_FRAME_INDEX),
                         '2' => (PlayerClass::Wizard, WIZARD_FRAME_INDEX),
                         '3' => (PlayerClass::Warrior, WARRIOR_FRAME_INDEX),
                         '4' => (PlayerClass::Telekinetic, TELEKINETIC_FRAME_INDEX),
+                        '5' => (PlayerClass::Sorcerer, SORCERER_FRAME_INDEX),
                         _ => unreachable!(),
                     };
                     spawn_floor(
