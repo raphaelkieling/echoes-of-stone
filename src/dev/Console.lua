@@ -29,6 +29,7 @@ function Console.new()
         input = "",
         commands = {},
         output = {},
+        suggestionSelection = 1,
         suppressTextInput = false,
     }, Console)
 end
@@ -89,6 +90,7 @@ function Console:keypressed(key, scancode, context)
         if isConsoleKey then
             self.open = true
             self.input = ""
+            self.suggestionSelection = 1
             self.suppressTextInput = true
             return true, "opened"
         end
@@ -102,13 +104,43 @@ function Console:keypressed(key, scancode, context)
     elseif key == "escape" then
         self.open = false
         self.input = ""
+    elseif key == "up" or key == "down" then
+        local prefix = self.input:match("^(%S*)") or ""
+        local matches = self:matchingCommands(prefix)
+        if #matches > 0 then
+            if key == "up" then
+                self.suggestionSelection = (self.suggestionSelection - 2) % #matches + 1
+            else
+                self.suggestionSelection = self.suggestionSelection % #matches + 1
+            end
+        end
     elseif key == "return" or key == "kpenter" then
-        self:execute(context)
-        self.input = ""
+        local commandName = self.input:match("^%s*(%S+)")
+        local hasArguments = self.input:match("^%s*%S+%s+%S+") ~= nil
+        local isCompleteCommand = commandName and self.commands[commandName:lower()]
+        if isCompleteCommand and (hasArguments or self.input:match("^%s*%S+%s*$")) then
+            self:execute(context)
+            self.input = ""
+            self.suggestionSelection = 1
+        else
+            local prefix = self.input:match("^(%S*)") or ""
+            local matches = self:matchingCommands(prefix)
+            local suggestion = matches[self.suggestionSelection]
+            if suggestion then
+                self.input = suggestion.name .. " "
+                self.suggestionSelection = 1
+            else
+                self:execute(context)
+                self.input = ""
+                self.suggestionSelection = 1
+            end
+        end
     elseif key == "tab" then
         self:complete()
+        self.suggestionSelection = 1
     elseif key == "backspace" then
         self.input = self.input:sub(1, -2)
+        self.suggestionSelection = 1
     end
     return true
 end
@@ -119,7 +151,10 @@ function Console:textinput(text)
         self.suppressTextInput = false
         if text == "`" or text == "~" then return end
     end
-    if text:match("^[%g ]+$") then self.input = self.input .. text end
+    if text:match("^[%g ]+$") then
+        self.input = self.input .. text
+        self.suggestionSelection = 1
+    end
 end
 
 function Console:draw()
@@ -149,12 +184,13 @@ function Console:draw()
     for index = 1, math.min(#matches, 3) do
         local command = matches[index]
         local rowY = y + 76 + (index - 1) * 22
-        if index == 1 then
+        local selected = index == self.suggestionSelection
+        if selected then
             love.graphics.setColor(0.055, 0.19, 0.12, 0.78)
             love.graphics.rectangle("fill", x + 12, rowY - 2, width - 24, 22)
         end
-        love.graphics.setColor(index == 1 and 0.43 or 0.72,
-            index == 1 and 1 or 0.86, index == 1 and 0.64 or 0.78, 1)
+        love.graphics.setColor(selected and 0.43 or 0.72,
+            selected and 1 or 0.86, selected and 0.64 or 0.78, 1)
         love.graphics.print(command.name .. "  -  " .. command.description,
             x + 22, rowY - 1)
     end

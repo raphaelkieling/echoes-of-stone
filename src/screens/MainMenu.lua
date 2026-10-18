@@ -20,8 +20,8 @@ function MainMenu:draw()
     local ruleWidth = math.min(width * 0.72, 900 * scale)
     UI.drawDivider((width - ruleWidth) / 2, height * 0.39, ruleWidth)
 
-    local panelX, panelY = 44 * scale, height - 330 * scale
-    local panelWidth, panelHeight = 360 * scale, 250 * scale
+    local panelX, panelY = 44 * scale, height - 290 * scale
+    local panelWidth, panelHeight = 360 * scale, 210 * scale
     UI.drawPanel(panelX, panelY, panelWidth, panelHeight)
     UI.setColor("accent")
     UI.setFont(23, width, height)
@@ -30,12 +30,12 @@ function MainMenu:draw()
 
     local rowY = panelY + 67 * scale
     for index, label in ipairs(self.options) do
-        local y = rowY + (index - 1) * 55 * scale
+        local y = rowY + (index - 1) * 43 * scale
         if index == self.selected then
-            UI.drawSelection(panelX + 14 * scale, y - 5 * scale, panelWidth - 28 * scale, 46 * scale)
+            UI.drawSelection(panelX + 14 * scale, y - 3 * scale, panelWidth - 28 * scale, 38 * scale)
         end
         UI.setColor(index == self.selected and "accent" or "text")
-        UI.setFont(34, width, height)
+        UI.setFont(30, width, height)
         love.graphics.print((index == self.selected and "> " or "  ") .. label,
             panelX + 28 * scale, y)
     end

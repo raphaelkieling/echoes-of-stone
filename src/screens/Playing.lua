@@ -205,26 +205,26 @@ function Playing:drawPause()
     love.graphics.setColor(0, 0, 0, 0.78)
     love.graphics.rectangle("fill", 0, 0, width, height)
     local panelWidth = math.min(width - 36 * scale, 620 * scale)
-    local panelHeight = 360 * scale
+    local panelHeight = 300 * scale
     local panelX, panelY = (width - panelWidth) / 2, (height - panelHeight) / 2
     UI.drawPanel(panelX, panelY, panelWidth, panelHeight)
 
     UI.setColor("accent")
-    UI.setFont(self.completed and 37 or 48, width, height)
+    UI.setFont(self.completed and 33 or 42, width, height)
     love.graphics.printf(self.completed and "ALL LEVELS COMPLETE" or "PAUSED",
         panelX + 20 * scale, panelY + 25 * scale, panelWidth - 40 * scale, "center")
-    UI.drawDivider(panelX + 28 * scale, panelY + 91 * scale, panelWidth - 56 * scale)
+    UI.drawDivider(panelX + 28 * scale, panelY + 78 * scale, panelWidth - 56 * scale)
 
     local options = self:getPauseOptions()
-    local rowHeight = 54 * scale
-    local firstRowY = panelY + 109 * scale
+    local rowHeight = 43 * scale
+    local firstRowY = panelY + 93 * scale
     for index, label in ipairs(options) do
         local y = firstRowY + (index - 1) * rowHeight
         if index == self.pauseSelection then
-            UI.drawSelection(panelX + 22 * scale, y - 4 * scale, panelWidth - 44 * scale, 47 * scale)
+            UI.drawSelection(panelX + 22 * scale, y - 3 * scale, panelWidth - 44 * scale, 38 * scale)
         end
         UI.setColor(index == self.pauseSelection and "accent" or "text")
-        UI.setFont(30, width, height)
+        UI.setFont(28, width, height)
         love.graphics.print((index == self.pauseSelection and "> " or "  ") .. label,
             panelX + 48 * scale, y)
     end
