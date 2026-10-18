@@ -127,6 +127,64 @@ function tests.player_switches_from_walking_back_to_idle()
     assert(stateMachine.currentName == "idle")
 end
 
+function tests.movement_effect_is_dispatched_by_the_actors_walking_state()
+    local board = makeBoard(0, 4, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local stateMachine = player:getComponent("Player"):getStateMachine()
+    local effects = {}
+    local effectState
+    local behavior = player:getComponent("CharacterClass").behavior
+    behavior.playMovementEffect = function(_self, receivedEffects)
+        effectState = stateMachine.currentName
+        assert(receivedEffects == effects)
+    end
+
+    assert(CharacterMovement.move(board, player, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(effectState == "walking")
+end
+
+function tests.wizard_uses_dust_for_a_normal_walk()
+    local board = makeBoard(0, 4, 0)
+    local wizard = spawnPlayer(board, 1, 0, Player.Classes.WIZARD)
+    local played = {}
+    local effects = {
+        dust = function() played[#played + 1] = "dust" end,
+        characterTrail = function() played[#played + 1] = "wizard-trail" end,
+    }
+
+    assert(CharacterMovement.move(board, wizard, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(#played == 1 and played[1] == "dust")
+end
+
+function tests.wizard_uses_only_its_trail_when_swapping_with_an_object()
+    local board = makeBoard(0, 5, 0)
+    local wizard = spawnPlayer(board, 1, 0, Player.Classes.WIZARD)
+    spawnBox(board, 4, 0)
+    local played = {}
+    local effects = {
+        dust = function() played[#played + 1] = "dust" end,
+        characterTrail = function() played[#played + 1] = "wizard-trail" end,
+    }
+
+    assert(CharacterMovement.move(board, wizard, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(#played == 1 and played[1] == "wizard-trail")
+end
+
+function tests.movement_effect_does_not_run_for_a_player_pushed_as_an_object()
+    local board = makeBoard(0, 5, 0)
+    local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local wizard = spawnPlayer(board, 2, 0, Player.Classes.WIZARD)
+    local effects = {}
+    local pushedPlayerEffectPlayed = false
+    dwarf:getComponent("CharacterClass").behavior.playMovementEffect = function() end
+    wizard:getComponent("CharacterClass").behavior.playMovementEffect = function()
+        pushedPlayerEffectPlayed = true
+    end
+
+    assert(CharacterMovement.move(board, dwarf, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(not pushedPlayerEffectPlayed)
+end
+
 function tests.undo_uses_walking_state_until_the_tween_finishes()
     local board = makeBoard(0, 4, 0)
     local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)

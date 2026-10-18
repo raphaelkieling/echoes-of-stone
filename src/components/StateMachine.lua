@@ -37,6 +37,13 @@ function StateMachine:update(dt)
     end
 end
 
+function StateMachine:dispatch(eventName, data)
+    local handler = self.current and self.current[eventName]
+    if not handler then return false end
+    handler(self.current, data)
+    return true
+end
+
 function StateMachine:visualOffset()
     if self.current and self.current.visualOffset then
         return self.current:visualOffset()

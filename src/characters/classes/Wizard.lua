@@ -18,4 +18,26 @@ function Wizard:move(movement, actor, direction, destination)
     return true
 end
 
+function Wizard:playMovementEffect(effects, actor, changes)
+	local actorMoved, swappedWithObject = false, false
+	for _, change in ipairs(changes) do
+		if change.object == actor then
+			actorMoved = true
+		else
+			swappedWithObject = true
+		end
+	end
+
+	if actorMoved and swappedWithObject then
+		for _, change in ipairs(changes) do
+			if change.object == actor then
+				effects:characterTrail(actor, change.fromX, change.fromY, change.toX, change.toY)
+				return
+			end
+		end
+	end
+
+	CharacterClass.playMovementEffect(self, effects, actor, changes)
+end
+
 return Wizard

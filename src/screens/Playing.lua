@@ -6,6 +6,7 @@ local Keymap = require("src.settings.Keymap")
 local BuildConfig = require("src.settings.BuildConfig")
 local UI = require("src.ui.Theme")
 local UndoHistoryOverlay = require("src.dev.UndoHistoryOverlay")
+local MovementEffects = require("src.game.MovementEffects")
 
 local Playing = {}
 Playing.__index = Playing
@@ -20,6 +21,7 @@ function Playing.new(game)
         mobileControls = game.mobileControls,
         camera = cameraLib(0, 0, 1),
         history = ActionHistory(),
+        movementEffects = MovementEffects.new(),
         levelIndex = 1,
         transition = nil,
         heldMoveKey = nil,
@@ -40,10 +42,13 @@ end
 function Playing:loadLevel()
     local level = assert(self.levels[self.levelIndex], "level index out of range")
     self.heldMoveKey = nil
+    self.pendingDirection = nil
+    self.mobileMoveDirection = nil
     self.moveRepeatTimer = 0
     self.levelPath = level.path
     self.board = LevelLoader.load(level.path, self.game.assets)
     self.history:clear()
+    self.movementEffects:clear()
     self.activeIndex = 1
     self:snapCameraToTarget()
 end
@@ -101,6 +106,8 @@ function Playing:update(dt)
         if self.transition.elapsed >= self.transition.duration then self.transition = nil end
     end
     if self.board then self.board:update(dt) end
+	self.movementEffects:update(dt)
+	self:updateBufferedMovement()
     self:updateHeldMovement(dt)
     if self.board then
         local targetX, targetY, targetZoom = self:cameraTarget()
@@ -112,6 +119,20 @@ function Playing:update(dt)
     if not self.paused and self.board and not self.board:isMoving() and self.board:allBoxesOnTargets() then
         self:advanceLevel()
     end
+end
+
+function Playing:movePlayer(direction)
+	local player = self:currentPlayer()
+	return player and CharacterMovement.move(self.board, player, direction,
+		self.history, self.movementEffects) or false
+end
+
+function Playing:updateBufferedMovement()
+	if not self.pendingDirection or self.paused or self.transition or self.board:isMoving() then return end
+	local direction = self.pendingDirection
+	self.pendingDirection = nil
+	self:movePlayer(direction)
+	self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
 function Playing:updateHeldMovement(dt)
@@ -133,10 +154,7 @@ function Playing:updateKeyboardMovement(dt)
 	if self.moveRepeatTimer > 0 or self.transition or self.board:isMoving() then return end
 
     local direction = Keymap.direction(self.heldMoveKey)
-    local player = self:currentPlayer()
-    if direction and player then
-        CharacterMovement.move(self.board, player, direction, self.history)
-    end
+	if direction then self:movePlayer(direction) end
 	self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
@@ -152,27 +170,30 @@ function Playing:updateMobileMovement(dt)
 		self.mobileMoveDirection = directionKey
 		self.moveRepeatTimer = MOVE_REPEAT_DELAY
 		if not self.transition and not self.board:isMoving() then
-			local player = self:currentPlayer()
-			if player then CharacterMovement.move(self.board, player, direction, self.history) end
+			self:movePlayer(direction)
+		elseif self.board:isMoving() and not self.transition then
+			self.pendingDirection = direction
 		end
 		return
 	end
 	self.moveRepeatTimer = self.moveRepeatTimer - dt
 	if self.moveRepeatTimer > 0 or self.transition or self.board:isMoving() then return end
-	local player = self:currentPlayer()
-	if player then CharacterMovement.move(self.board, player, direction, self.history) end
+	self:movePlayer(direction)
 	self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
 function Playing:clearHeldMovement()
     self.heldMoveKey = nil
     self.moveRepeatTimer = 0
+	self.pendingDirection = nil
+	self.mobileMoveDirection = nil
 end
 
 function Playing:draw()
     if not self.board then return end
     self.camera:attach()
     self.board:draw(self:currentPlayer())
+	self.movementEffects:draw()
     local undoPaths
     if self.board.debugShowUndoHistory then
         undoPaths = UndoHistoryOverlay.drawWorld(self.board, self.history.actions)
@@ -345,8 +366,7 @@ function Playing:keypressed(key)
         return
     end
     if Keymap.matches("pause", key) then
-        self.heldMoveKey = nil
-        self.moveRepeatTimer = 0
+		self:clearHeldMovement()
         self.paused, self.pauseSelection = true, 1
         return
     end
@@ -358,9 +378,12 @@ function Playing:keypressed(key)
     if direction then
         self.heldMoveKey = key
         self.moveRepeatTimer = MOVE_REPEAT_DELAY
-        if not self.board:isMoving() and not self.transition then
-            local player = self:currentPlayer()
-            if player then CharacterMovement.move(self.board, player, direction, self.history) end
+        if self.transition then return end
+        if self.board:isMoving() then
+			self.pendingDirection = direction
+		else
+			self.pendingDirection = nil
+			self:movePlayer(direction)
         end
         return
     end

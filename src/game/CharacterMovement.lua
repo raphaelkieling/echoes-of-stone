@@ -36,7 +36,7 @@ local function shakeBlockedObjects(session, direction)
     end
 end
 
-function CharacterMovement.move(board, actor, direction, history)
+function CharacterMovement.move(board, actor, direction, history, effects)
     if not board or not actor or not actor:hasComponent("Player")
         or not actor:hasComponent("CharacterClass") or not isCardinalDirection(direction) then
         return false
@@ -73,6 +73,15 @@ function CharacterMovement.move(board, actor, direction, history)
     end
     if history then history:record(snapshots) end
     startPlayerStates(changes, actor)
+    local player = actor:getComponent("Player")
+    local stateMachine = player and player:getStateMachine()
+    if stateMachine then
+        stateMachine:dispatch("onMovement", {
+            effects = effects,
+            changes = changes,
+            direction = direction,
+        })
+    end
     return true
 end
 

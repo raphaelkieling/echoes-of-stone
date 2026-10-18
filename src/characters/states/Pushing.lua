@@ -1,16 +1,5 @@
-local Class = require("src.core.Class")
+local MovementState = require("src.characters.states.MovementState")
 
-local Pushing = Class:extend()
-
-function Pushing:init(owner, stateMachine)
-    self.owner = owner
-    self.stateMachine = stateMachine
-end
-
-function Pushing:update(_dt)
-    if not self.owner:getComponent("Transform"):isMoving() then
-        self.stateMachine:change("idle")
-    end
-end
+local Pushing = MovementState:extend()
 
 return Pushing
