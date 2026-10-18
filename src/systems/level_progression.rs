@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{GridPosition, InteractiveObject, InteractiveObjectKind, Target};
+use crate::components::{BoxObject, GridPosition, Target};
 use crate::resources::{ActionHistory, LevelProgress, PlayerSelection};
 use crate::systems::level_spawner::{spawn_level_contents, LevelEntity, LevelHandle};
 
@@ -114,7 +114,7 @@ pub fn animate_level_transition_system(
 /// Emits one win event when every box is on a target.
 pub fn check_level_win_system(
     mut progress: ResMut<LevelProgress>,
-    boxes: Query<(&GridPosition, &InteractiveObject)>,
+    boxes: Query<&GridPosition, With<BoxObject>>,
     targets: Query<&GridPosition, With<Target>>,
     mut level_wins: EventWriter<LevelWin>,
 ) {
@@ -122,11 +122,7 @@ pub fn check_level_win_system(
         return;
     }
 
-    let box_positions: Vec<GridPosition> = boxes
-        .iter()
-        .filter(|(_, object)| object.kind == InteractiveObjectKind::Box)
-        .map(|(position, _)| *position)
-        .collect();
+    let box_positions: Vec<GridPosition> = boxes.iter().copied().collect();
     let target_positions: Vec<GridPosition> = targets.iter().copied().collect();
 
     let all_boxes_on_targets = !box_positions.is_empty()

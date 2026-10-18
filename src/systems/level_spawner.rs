@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::fs;
 
 use crate::components::{
-    Floor, GridPosition, InteractiveObject, Player, PlayerClass, Target, Wall,
+    BoxObject, Floor, GridPosition, InteractiveObject, Player, PlayerClass, Target, Wall,
 };
 
 pub const TILE_SIZE: f32 = 64.0;
@@ -217,7 +217,8 @@ pub(crate) fn spawn_level_contents(
                             TILE_SIZE,
                         ),
                         tile_transform(position, OBJECT_LAYER),
-                        InteractiveObject::BOX,
+                        InteractiveObject,
+                        BoxObject,
                         LevelEntity,
                         grid_position,
                     ));
@@ -246,6 +247,7 @@ pub(crate) fn spawn_level_contents(
                         ),
                         tile_transform(position, PLAYER_LAYER),
                         Player { class },
+                        InteractiveObject,
                         LevelEntity,
                         grid_position,
                     ));

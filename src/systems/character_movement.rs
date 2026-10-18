@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::components::{Floor, GridPosition, InteractiveObject, Player, PlayerClass, Wall};
+use crate::components::{
+    BoxObject, Floor, GridPosition, InteractiveObject, Player, PlayerClass, Wall,
+};
 use crate::resources::{ActionCompensation, ActionHistory, EntitySnapshot};
 use crate::systems::{level_spawner::TILE_SIZE, PlayerMoveEvent};
 
@@ -55,7 +57,6 @@ pub fn character_movement_system(
         let mut snapshots = vec![player_before.clone()];
         let player_destination = match class {
             PlayerClass::Dwarf | PlayerClass::Warrior => {
-                let push_distance = if class == PlayerClass::Warrior { 2 } else { 1 };
                 let Some(chain) = collect_push_chain(destination, direction, player, &queries.p1())
                 else {
                     continue;
@@ -65,13 +66,20 @@ pub fn character_movement_system(
                     destination
                 } else {
                     let last_object_position = chain.last().unwrap().grid_position;
-                    if !has_clear_push_path(
-                        last_object_position,
-                        direction,
-                        push_distance,
-                        player,
-                        &queries.p1(),
-                    ) {
+                    let push_distance = if class == PlayerClass::Warrior {
+                        max_push_distance(last_object_position, direction, player, &queries.p1())
+                    } else {
+                        1
+                    };
+                    if push_distance == 0
+                        || !has_clear_push_path(
+                            last_object_position,
+                            direction,
+                            push_distance,
+                            player,
+                            &queries.p1(),
+                        )
+                    {
                         continue;
                     }
 
@@ -149,11 +157,32 @@ fn has_clear_push_path(
 ) -> bool {
     (1..=distance).all(|step| {
         let position = offset(last_object_position, direction * step);
-        can_occupy(position, player, cells)
-            && !cells.iter().any(|(_, cell_position, _, _, object, _, _)| {
-                object.is_some() && *cell_position == position
-            })
+        can_push_into(position, player, cells)
     })
+}
+
+fn max_push_distance(
+    last_object_position: GridPosition,
+    direction: IVec2,
+    player: Entity,
+    cells: &CellQuery<'_, '_>,
+) -> i32 {
+    let mut distance = 0;
+    while can_push_into(
+        offset(last_object_position, direction * (distance + 1)),
+        player,
+        cells,
+    ) {
+        distance += 1;
+    }
+    distance
+}
+
+fn can_push_into(position: GridPosition, player: Entity, cells: &CellQuery<'_, '_>) -> bool {
+    can_occupy(position, player, cells)
+        && !cells.iter().any(|(_, cell_position, _, _, object, _, _)| {
+            object.is_some() && *cell_position == position
+        })
 }
 
 fn collect_push_chain(
@@ -226,12 +255,14 @@ fn first_object_in_ray(
 
 fn can_occupy(position: GridPosition, moving_player: Entity, cells: &CellQuery<'_, '_>) -> bool {
     let mut has_floor = false;
-    for (entity, cell_position, wall, floor, _, character, _) in cells.iter() {
+    for (entity, cell_position, wall, floor, interactive, character, _) in cells.iter() {
         if *cell_position != position {
             continue;
         }
         has_floor |= floor.is_some();
-        if wall.is_some() || (character.is_some() && entity != moving_player) {
+        if wall.is_some()
+            || (character.is_some() && entity != moving_player && interactive.is_none())
+        {
             return false;
         }
     }
@@ -287,6 +318,7 @@ mod tests {
         app.world_mut()
             .spawn((
                 Player { class },
+                InteractiveObject,
                 position(x, y),
                 Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 3.0),
             ))
@@ -296,7 +328,18 @@ mod tests {
     fn spawn_box(app: &mut App, x: i32, y: i32) -> Entity {
         app.world_mut()
             .spawn((
-                InteractiveObject::BOX,
+                InteractiveObject,
+                BoxObject,
+                position(x, y),
+                Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 2.0),
+            ))
+            .id()
+    }
+
+    fn spawn_generic_interactive_object(app: &mut App, x: i32, y: i32) -> Entity {
+        app.world_mut()
+            .spawn((
+                InteractiveObject,
                 position(x, y),
                 Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 2.0),
             ))
@@ -368,6 +411,20 @@ mod tests {
     }
 
     #[test]
+    fn dwarf_pushes_any_interactive_object_without_a_box_marker() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
+        let object = spawn_generic_interactive_object(&mut app, 2, 0);
+
+        move_player(&mut app, dwarf, IVec2::X);
+
+        assert_eq!(position_of(&mut app, dwarf), position(2, 0));
+        assert_eq!(position_of(&mut app, object), position(3, 0));
+        assert_eq!(history_snapshot_count(&mut app), 2);
+    }
+
+    #[test]
     fn dwarf_pushes_a_contiguous_chain_together() {
         let mut app = test_app();
         spawn_row(&mut app, 0, 5, 0);
@@ -408,7 +465,7 @@ mod tests {
     }
 
     #[test]
-    fn dwarf_cannot_push_a_box_through_another_player() {
+    fn dwarf_pushes_a_box_and_another_player_as_a_chain() {
         let mut app = test_app();
         spawn_row(&mut app, 0, 4, 0);
         let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
@@ -417,14 +474,14 @@ mod tests {
 
         move_player(&mut app, dwarf, IVec2::X);
 
-        assert_eq!(position_of(&mut app, dwarf), position(1, 0));
-        assert_eq!(position_of(&mut app, box_entity), position(2, 0));
-        assert_eq!(position_of(&mut app, other_player), position(3, 0));
-        assert_eq!(history_snapshot_count(&mut app), 0);
+        assert_eq!(position_of(&mut app, dwarf), position(2, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(3, 0));
+        assert_eq!(position_of(&mut app, other_player), position(4, 0));
+        assert_eq!(history_snapshot_count(&mut app), 3);
     }
 
     #[test]
-    fn warrior_pushes_a_chain_two_tiles_while_moving_one() {
+    fn warrior_pushes_a_chain_as_far_as_possible_while_moving_one() {
         let mut app = test_app();
         spawn_row(&mut app, 0, 7, 0);
         let warrior = spawn_player(&mut app, 1, 0, PlayerClass::Warrior);
@@ -434,13 +491,13 @@ mod tests {
         move_player(&mut app, warrior, IVec2::X);
 
         assert_eq!(position_of(&mut app, warrior), position(2, 0));
-        assert_eq!(position_of(&mut app, first_box), position(4, 0));
-        assert_eq!(position_of(&mut app, second_box), position(5, 0));
+        assert_eq!(position_of(&mut app, first_box), position(6, 0));
+        assert_eq!(position_of(&mut app, second_box), position(7, 0));
         assert_eq!(history_snapshot_count(&mut app), 3);
     }
 
     #[test]
-    fn warrior_cannot_push_if_the_two_tile_path_is_blocked() {
+    fn warrior_pushes_until_the_wall_even_if_the_path_is_short() {
         let mut app = test_app();
         spawn_row(&mut app, 0, 3, 0);
         spawn_wall(&mut app, 4, 0);
@@ -449,13 +506,13 @@ mod tests {
 
         move_player(&mut app, warrior, IVec2::X);
 
-        assert_eq!(position_of(&mut app, warrior), position(1, 0));
-        assert_eq!(position_of(&mut app, box_entity), position(2, 0));
-        assert_eq!(history_snapshot_count(&mut app), 0);
+        assert_eq!(position_of(&mut app, warrior), position(2, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(3, 0));
+        assert_eq!(history_snapshot_count(&mut app), 2);
     }
 
     #[test]
-    fn warrior_does_not_push_into_a_box_beyond_a_gap() {
+    fn warrior_pushes_until_another_object_blocks_the_path() {
         let mut app = test_app();
         spawn_row(&mut app, 0, 6, 0);
         let warrior = spawn_player(&mut app, 1, 0, PlayerClass::Warrior);
@@ -464,10 +521,10 @@ mod tests {
 
         move_player(&mut app, warrior, IVec2::X);
 
-        assert_eq!(position_of(&mut app, warrior), position(1, 0));
-        assert_eq!(position_of(&mut app, first_box), position(2, 0));
+        assert_eq!(position_of(&mut app, warrior), position(2, 0));
+        assert_eq!(position_of(&mut app, first_box), position(3, 0));
         assert_eq!(position_of(&mut app, second_box), position(4, 0));
-        assert_eq!(history_snapshot_count(&mut app), 0);
+        assert_eq!(history_snapshot_count(&mut app), 2);
     }
 
     #[test]

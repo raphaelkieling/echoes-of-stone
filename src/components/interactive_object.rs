@@ -1,18 +1,9 @@
 use bevy::prelude::*;
 
-/// Marks an object the player can interact with on the grid.
-#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct InteractiveObject {
-    pub kind: InteractiveObjectKind,
-}
+/// Marks any entity that character movement rules may move as an object.
+#[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct InteractiveObject;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum InteractiveObjectKind {
-    Box,
-}
-
-impl InteractiveObject {
-    pub const BOX: Self = Self {
-        kind: InteractiveObjectKind::Box,
-    };
-}
+/// Identifies a pushable object that participates in level completion.
+#[derive(Component, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BoxObject;
