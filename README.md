@@ -23,6 +23,7 @@ Press the grave/tilde key (` or ~) to open or close the in-game console. Use `Ta
 
 - `show-solid` toggles outlines for solid map cells and interactive objects.
 - `show-solid on` / `show-solid off` explicitly enable or disable the outlines.
+- `jump-to 0` loads level 0; `jump-to p` loads the playground (also accepts a level name).
 - `help` lists registered commands.
 
 Commands are registered in `src/dev/ConsoleCommands.lua`. To remove the console

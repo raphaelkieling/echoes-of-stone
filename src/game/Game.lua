@@ -50,6 +50,8 @@ function Game:keypressed(key, scancode, isrepeat)
         local currentScene = self.scenes.current
         local handled, action = self.console:keypressed(key, scancode, {
             board = currentScene and currentScene.board,
+            scene = currentScene,
+            game = self,
         })
         if handled then
             if action == "opened" and currentScene and currentScene.clearHeldMovement then
