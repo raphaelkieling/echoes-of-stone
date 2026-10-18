@@ -164,6 +164,24 @@ function Board:draw(activePlayer)
         end
     end
 
+    if activePlayer then
+        local characterClass = activePlayer:getComponent("CharacterClass")
+        if characterClass and characterClass.behavior.id == Player.Classes.MYSTERIOUS_PRIEST then
+            local transform = activePlayer:getComponent("Transform")
+            local pulse = (math.sin(love.timer.getTime() * 2) + 1) / 2
+            local auraSize = transform.cellSize * 3 * (1 - pulse * 0.008)
+            love.graphics.push("all")
+            love.graphics.setColor(0.35, 0.9, 1, 0.68 + pulse * 0.1)
+            love.graphics.setLineWidth(1.5 + pulse * 0.5)
+            love.graphics.rectangle("line",
+                transform.x - auraSize / 2,
+                transform.y - auraSize / 2,
+                auraSize,
+                auraSize)
+            love.graphics.pop()
+        end
+    end
+
     local drawOrder = {}
     for _, object in ipairs(self.objects) do
         drawOrder[#drawOrder + 1] = object

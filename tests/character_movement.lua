@@ -19,6 +19,16 @@ local function makeBoard(xStart, xEnd, y, walls)
     return board
 end
 
+local function makeRectBoard(width, height, walls)
+    local board = Board(nil, width, height)
+    for y = 0, height - 1 do
+        for x = 0, width - 1 do
+            board:setCell(x, y, {walkable = not (walls and walls[x .. ":" .. y])})
+        end
+    end
+    return board
+end
+
 local function spawnPlayer(board, x, y, classId)
     local player = GameObject("test-player")
     player:addComponent(Transform(x, y, 64, 3))
@@ -254,6 +264,68 @@ function tests.sorcerer_pulls_a_player_as_a_block()
     assert(run(board, sorcerer, {x = 1, y = 0}))
     assertPosition(sorcerer, 2, 0)
     assertPosition(wizard, 3, 0)
+end
+
+function tests.mysterious_priest_moves_every_interactive_object_in_its_square_aura()
+    local board = makeRectBoard(8, 8)
+    local priest = spawnPlayer(board, 3, 3, Player.Classes.MYSTERIOUS_PRIEST)
+    local forwardBox = spawnBox(board, 4, 3)
+    local diagonalBox = spawnBox(board, 2, 2)
+    local nearbyPlayer = spawnPlayer(board, 4, 4, Player.Classes.WIZARD)
+    local outsideBox = spawnBox(board, 1, 1)
+
+    assert(run(board, priest, {x = 1, y = 0}))
+    assertPosition(priest, 4, 3)
+    assertPosition(forwardBox, 5, 3)
+    assertPosition(diagonalBox, 3, 2)
+    assertPosition(nearbyPlayer, 5, 4)
+    assertPosition(outsideBox, 1, 1)
+end
+
+function tests.mysterious_priest_continues_when_an_aura_object_is_blocked()
+    local board = makeRectBoard(7, 7, {["4:2"] = true})
+    local priest = spawnPlayer(board, 3, 3, Player.Classes.MYSTERIOUS_PRIEST)
+    local blockedBox = spawnBox(board, 3, 2)
+    local movingBox = spawnBox(board, 3, 4)
+
+    assert(run(board, priest, {x = 1, y = 0}))
+    assertPosition(priest, 4, 3)
+    assertPosition(blockedBox, 3, 2)
+    assertPosition(movingBox, 4, 4)
+end
+
+function tests.mysterious_priest_can_leave_a_cell_for_a_trailing_aura_object()
+    local board = makeRectBoard(7, 5)
+    local priest = spawnPlayer(board, 3, 2, Player.Classes.MYSTERIOUS_PRIEST)
+    local trailingBox = spawnBox(board, 2, 2)
+
+    assert(run(board, priest, {x = 1, y = 0}))
+    assertPosition(priest, 4, 2)
+    assertPosition(trailingBox, 3, 2)
+end
+
+function tests.mysterious_priest_does_not_overlap_a_trailing_object_if_blocked()
+    local board = makeRectBoard(7, 5, {["5:2"] = true})
+    local priest = spawnPlayer(board, 3, 2, Player.Classes.MYSTERIOUS_PRIEST)
+    local blockedBox = spawnBox(board, 4, 2)
+    local trailingBox = spawnBox(board, 2, 2)
+
+    assert(not run(board, priest, {x = 1, y = 0}))
+    assertPosition(priest, 3, 2)
+    assertPosition(blockedBox, 4, 2)
+    assertPosition(trailingBox, 2, 2)
+end
+
+function tests.mysterious_priest_does_not_move_objects_when_pushed_as_a_block()
+    local board = makeRectBoard(7, 5)
+    local dwarf = spawnPlayer(board, 1, 2, Player.Classes.DWARF)
+    local priest = spawnPlayer(board, 2, 2, Player.Classes.MYSTERIOUS_PRIEST)
+    local box = spawnBox(board, 2, 3)
+
+    assert(run(board, dwarf, {x = 1, y = 0}))
+    assertPosition(dwarf, 2, 2)
+    assertPosition(priest, 3, 2)
+    assertPosition(box, 2, 3)
 end
 
 function tests.warrior_pushes_a_player_and_box_chain_without_using_player_abilities()

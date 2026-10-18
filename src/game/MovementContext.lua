@@ -172,6 +172,54 @@ function MovementContext:pullFirstInRay(actor, direction, destination)
     return self:enter(actor, destination.x, destination.y)
 end
 
+function MovementContext:moveAuraAndEnter(actor, direction, destination, radius)
+    local center = self:position(actor)
+    local affected = {}
+    for _, object in ipairs(self.board.objects) do
+        if object ~= actor and object:hasComponent("InteractiveObject") then
+            local position = self:position(object)
+            if math.abs(position.x - center.x) <= radius and math.abs(position.y - center.y) <= radius then
+                affected[#affected + 1] = object
+            end
+        end
+    end
+
+    -- Move the leading objects first so a contiguous group can advance together.
+    table.sort(affected, function(a, b)
+        local aPosition, bPosition = self:position(a), self:position(b)
+        local aProjection = aPosition.x * direction.x + aPosition.y * direction.y
+        local bProjection = bPosition.x * direction.x + bPosition.y * direction.y
+        return aProjection > bProjection
+    end)
+
+    local trailingObjects = {}
+    for _, object in ipairs(affected) do
+        local position = self:position(object)
+        local nextX, nextY = position.x + direction.x, position.y + direction.y
+        if nextX == center.x and nextY == center.y then
+            trailingObjects[#trailingObjects + 1] = object
+        else
+            local blocker = self:objectAt(nextX, nextY, object)
+            local canMove = self:canWalk(nextX, nextY)
+            if canMove and not blocker then
+                self:moveObject(object, nextX, nextY)
+            else
+                self:markBlocked(blocker or object)
+            end
+        end
+    end
+
+    local actorMoved = self:enter(actor, destination.x, destination.y)
+    for _, object in ipairs(trailingObjects) do
+        if actorMoved and self:canWalk(center.x, center.y) and not self:objectAt(center.x, center.y, actor) then
+            self:moveObject(object, center.x, center.y)
+        else
+            self:markBlocked(object)
+        end
+    end
+    return actorMoved
+end
+
 function MovementContext:changedPositions()
     local changes = {}
     for _, object in ipairs(self.board.objects) do

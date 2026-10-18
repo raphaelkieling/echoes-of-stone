@@ -11,6 +11,7 @@ local PLAYER_MARKERS = {
     ["3"] = Player.Classes.WARRIOR,
     ["4"] = Player.Classes.TELEKINETIC,
     ["5"] = Player.Classes.SORCERER,
+    ["6"] = Player.Classes.MYSTERIOUS_PRIEST,
 }
 
 local PLAYER_CLASS_IDS = {
@@ -19,6 +20,7 @@ local PLAYER_CLASS_IDS = {
     Player.Classes.WARRIOR,
     Player.Classes.TELEKINETIC,
     Player.Classes.SORCERER,
+    Player.Classes.MYSTERIOUS_PRIEST,
 }
 
 function LevelLoader.listLevels()
