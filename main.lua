@@ -17,3 +17,6 @@ function love.mousereleased(x, y, button, isTouch, presses) love.game:mouserelea
 function love.touchpressed(id, x, y, dx, dy, pressure) love.game:touchpressed(id, x, y, dx, dy, pressure) end
 function love.touchmoved(id, x, y, dx, dy, pressure) love.game:touchmoved(id, x, y, dx, dy, pressure) end
 function love.touchreleased(id, x, y, dx, dy, pressure) love.game:touchreleased(id, x, y, dx, dy, pressure) end
+function love.quit()
+	if love.game and love.game.events then love.game.events:emit("game.closed", {}) end
+end

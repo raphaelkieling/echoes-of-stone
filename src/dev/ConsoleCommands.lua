@@ -23,7 +23,29 @@ local function findLevelIndex(levels, query)
     end
 end
 
+local function shellQuote(value)
+	return "'" .. value:gsub("'", "'\\''") .. "'"
+end
+
 function ConsoleCommands.register(console)
+	console:registerCommand("copy-logger-path", "copy the current JSON log path", function(context)
+		local game = context and context.game
+		local logger = game and game.logger
+		if not logger then return "Logger is unavailable." end
+		if logger.lastError then
+			return "Logger write failed: " .. tostring(logger.lastError)
+		end
+		if not love.filesystem.getInfo(logger.path) then
+			return "Logger file has not been created: " .. logger:getPath()
+		end
+
+		local path = logger:getPath()
+		local quotedPath = shellQuote(path)
+		local copied, err = pcall(love.system.setClipboardText, quotedPath)
+		if not copied then return "Could not copy logger path: " .. tostring(err) end
+		return "Shell-quoted logger path copied: " .. quotedPath
+	end)
+
 	console:registerCommand("show-undo-history", "show player paths for each undo", function(context, args)
 		local board = context and context.board
 		if not board then return "No active board." end

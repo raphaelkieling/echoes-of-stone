@@ -23,8 +23,9 @@ local function commonPrefix(strings)
     return prefix
 end
 
-function Console.new()
+function Console.new(events)
     return setmetatable({
+        events = events,
         open = false,
         input = "",
         commands = {},
@@ -86,11 +87,16 @@ end
 function Console:execute(context)
 	local command, arguments = self:resolveCommand(self.input)
 	if not command then
+		local name = self.input:match("^%s*(%S+)")
+		if self.events then self.events:emit("command.unknown", {command = name}) end
 		self:write("Unknown command: " .. self.input)
 		return
 	end
 
 	local ok, result = pcall(command.callback, context, arguments or {}, self)
+	if self.events then
+		self.events:emit("command.executed", {command = command.name, succeeded = ok})
+	end
     if not ok then
         self:write("Error: " .. tostring(result))
     elseif result then

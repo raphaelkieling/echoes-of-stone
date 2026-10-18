@@ -9,12 +9,17 @@ local Fonts = require("src.ui.Fonts")
 local BuildConfig = require("src.settings.BuildConfig")
 local MobileControls = require("src.input.MobileControls")
 local AudioManager = require("src.audio.AudioManager")
+local EventEmitter = require("src.core.EventEmitter")
+local JsonLogger = require("src.core.JsonLogger")
 
 local Game = {}
 Game.__index = Game
 
 function Game.new()
     local self = setmetatable({}, Game)
+    self.events = EventEmitter.new()
+    self.logger = JsonLogger.new(self.events)
+    self.events:emit("game.opened", {})
     self.assets = Assets.new()
     self.mobileControls = MobileControls.new()
     self.audio = AudioManager.new()
@@ -24,7 +29,7 @@ function Game.new()
     if BuildConfig.developmentMode then
         local Console = require("src.dev.Console")
         local ConsoleCommands = require("src.dev.ConsoleCommands")
-        self.console = Console.new()
+        self.console = Console.new(self.events)
         ConsoleCommands.register(self.console)
     end
     self.scenes:register("menu", MainMenu.new)

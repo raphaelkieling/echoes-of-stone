@@ -68,6 +68,12 @@ function Playing:loadLevel()
     self.moveRepeatTimer = 0
     self.levelPath = level.path
     self.board = LevelLoader.load(level.path, self.game.assets)
+    self.game.events:emit("level.started", {
+		level = level.name,
+		path = level.path,
+		index = self.levelIndex,
+		players = #self.board.players,
+	})
     self.history:clear()
     self.movementEffects:clear()
     self.activeIndex = 1
@@ -111,6 +117,7 @@ end
 
 function Playing:advanceLevel()
     self.game.completedLevels[self.levelPath] = true
+	self.game.events:emit("level.completed", {level = self.levelPath, index = self.levelIndex})
     if self.levelIndex < #self.levels then
         self.levelIndex = self.levelIndex + 1
         self:loadLevel()
@@ -145,9 +152,18 @@ end
 function Playing:movePlayer(direction)
 	local player = self:currentPlayer()
 	if not player then return false end
+	local class = player:getComponent("CharacterClass").behavior
 	local previousBoxesOnTargets = boxesOnTargets(self.board)
 	local moved = CharacterMovement.move(self.board, player, direction,
 		self.history, self.movementEffects)
+	self.game.events:emit("player.moved", {
+		level = self.levelPath,
+		playerIndex = self.activeIndex,
+		characterClass = class.id,
+		directionX = direction.x,
+		directionY = direction.y,
+		moved = moved,
+	})
 	self.game.audio:play(moved and "move" or "invalidMovement")
 	if moved and hasBoxArrivedOnTarget(self.board, previousBoxesOnTargets) then
 		self.game.audio:play("target")
@@ -158,7 +174,15 @@ end
 function Playing:undo()
 	local undone = self.history:undo()
 	if undone then self.game.audio:play("undo") end
+	self.game.events:emit("player.undo", {level = self.levelPath, undone = undone})
 	return undone
+end
+
+function Playing:selectNextPlayer()
+	if #self.board.players == 0 then return end
+	local previousIndex = self.activeIndex
+	self.activeIndex = self.activeIndex % #self.board.players + 1
+	self.game.events:emit("player.switched", {from = previousIndex, to = self.activeIndex})
 end
 
 function Playing:updateBufferedMovement()
@@ -260,7 +284,7 @@ function Playing:mobileAction(action)
 		if self.paused then
 			self:choosePauseOption()
 		elseif not self.board:isMoving() and not self.transition and #self.board.players > 0 then
-			self.activeIndex = self.activeIndex % #self.board.players + 1
+			self:selectNextPlayer()
 		end
 	elseif action == "b" then
 		if self.paused then
@@ -434,7 +458,7 @@ function Playing:keypressed(key)
     end
     if self.board:isMoving() or self.transition then return end
     if Keymap.matches("switchPlayer", key) then
-        if #self.board.players > 0 then self.activeIndex = self.activeIndex % #self.board.players + 1 end
+        self:selectNextPlayer()
     elseif Keymap.matches("undo", key) then
 		self:undo()
     end

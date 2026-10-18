@@ -23,6 +23,7 @@ function SceneManager:switch(name, ...)
     if self.current.enter then
         self.current:enter(...)
     end
+    self.game.events:emit("screen.opened", {screen = name})
 end
 
 function SceneManager:update(dt)
