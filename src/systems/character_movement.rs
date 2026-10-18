@@ -231,3 +231,262 @@ fn set_position(position: &mut GridPosition, transform: &mut Transform, target: 
     *position = target;
     transform.translation += Vec3::new(delta_x as f32 * TILE_SIZE, delta_y as f32 * TILE_SIZE, 0.0);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::components::Floor;
+
+    fn test_app() -> App {
+        let mut app = App::new();
+        app.add_event::<PlayerMoveEvent>()
+            .init_resource::<ActionHistory>()
+            .add_systems(Update, character_movement_system);
+        app
+    }
+
+    fn position(x: i32, y: i32) -> GridPosition {
+        GridPosition { x, y }
+    }
+
+    fn spawn_floor(app: &mut App, x: i32, y: i32) {
+        app.world_mut().spawn((Floor, position(x, y)));
+    }
+
+    fn spawn_row(app: &mut App, x_start: i32, x_end: i32, y: i32) {
+        for x in x_start..=x_end {
+            spawn_floor(app, x, y);
+        }
+    }
+
+    fn spawn_player(app: &mut App, x: i32, y: i32, class: PlayerClass) -> Entity {
+        app.world_mut()
+            .spawn((
+                Player { class },
+                position(x, y),
+                Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 3.0),
+            ))
+            .id()
+    }
+
+    fn spawn_box(app: &mut App, x: i32, y: i32) -> Entity {
+        app.world_mut()
+            .spawn((
+                InteractiveObject::BOX,
+                position(x, y),
+                Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 2.0),
+            ))
+            .id()
+    }
+
+    fn spawn_wall(app: &mut App, x: i32, y: i32) {
+        app.world_mut()
+            .spawn((Wall, position(x, y), Transform::default()));
+    }
+
+    fn move_player(app: &mut App, player: Entity, direction: IVec2) {
+        app.world_mut()
+            .resource_mut::<Events<PlayerMoveEvent>>()
+            .send(PlayerMoveEvent { player, direction });
+        app.update();
+    }
+
+    fn position_of(app: &mut App, entity: Entity) -> GridPosition {
+        let world = app.world_mut();
+        let mut query = world.query::<&GridPosition>();
+        *query
+            .get(world, entity)
+            .expect("entity should have a grid position")
+    }
+
+    fn translation_of(app: &mut App, entity: Entity) -> Vec3 {
+        let world = app.world_mut();
+        let mut query = world.query::<&Transform>();
+        query
+            .get(world, entity)
+            .expect("entity should have a transform")
+            .translation
+    }
+
+    fn history_snapshot_count(app: &mut App) -> usize {
+        app.world_mut()
+            .resource_mut::<ActionHistory>()
+            .pop_last()
+            .map_or(0, |action| action.snapshots.len())
+    }
+
+    #[test]
+    fn dwarf_moves_one_tile_on_empty_floor() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
+
+        move_player(&mut app, dwarf, IVec2::X);
+
+        assert_eq!(position_of(&mut app, dwarf), position(2, 0));
+        assert_eq!(translation_of(&mut app, dwarf).x, 2.0 * TILE_SIZE);
+        assert_eq!(history_snapshot_count(&mut app), 1);
+    }
+
+    #[test]
+    fn dwarf_pushes_one_box_one_tile() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
+        let box_entity = spawn_box(&mut app, 2, 0);
+
+        move_player(&mut app, dwarf, IVec2::X);
+
+        assert_eq!(position_of(&mut app, dwarf), position(2, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(3, 0));
+        assert_eq!(translation_of(&mut app, box_entity).x, 3.0 * TILE_SIZE);
+        assert_eq!(history_snapshot_count(&mut app), 2);
+    }
+
+    #[test]
+    fn dwarf_pushes_a_contiguous_chain_together() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 5, 0);
+        let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
+        let first_box = spawn_box(&mut app, 2, 0);
+        let second_box = spawn_box(&mut app, 3, 0);
+
+        move_player(&mut app, dwarf, IVec2::X);
+
+        assert_eq!(position_of(&mut app, dwarf), position(2, 0));
+        assert_eq!(position_of(&mut app, first_box), position(3, 0));
+        assert_eq!(position_of(&mut app, second_box), position(4, 0));
+        assert_eq!(translation_of(&mut app, first_box).x, 3.0 * TILE_SIZE);
+        let compensation = app
+            .world_mut()
+            .resource_mut::<ActionHistory>()
+            .pop_last()
+            .expect("the push should be undoable");
+        assert_eq!(compensation.snapshots.len(), 3);
+        assert_eq!(compensation.snapshots[0].grid_position, position(1, 0));
+        assert_eq!(compensation.snapshots[1].grid_position, position(2, 0));
+        assert_eq!(compensation.snapshots[2].grid_position, position(3, 0));
+    }
+
+    #[test]
+    fn dwarf_cannot_push_a_chain_into_a_wall() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 2, 0);
+        spawn_wall(&mut app, 3, 0);
+        let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
+        let box_entity = spawn_box(&mut app, 2, 0);
+
+        move_player(&mut app, dwarf, IVec2::X);
+
+        assert_eq!(position_of(&mut app, dwarf), position(1, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(2, 0));
+        assert_eq!(history_snapshot_count(&mut app), 0);
+    }
+
+    #[test]
+    fn dwarf_cannot_push_a_box_through_another_player() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let dwarf = spawn_player(&mut app, 1, 0, PlayerClass::Dwarf);
+        let box_entity = spawn_box(&mut app, 2, 0);
+        let other_player = spawn_player(&mut app, 3, 0, PlayerClass::Wizard);
+
+        move_player(&mut app, dwarf, IVec2::X);
+
+        assert_eq!(position_of(&mut app, dwarf), position(1, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(2, 0));
+        assert_eq!(position_of(&mut app, other_player), position(3, 0));
+        assert_eq!(history_snapshot_count(&mut app), 0);
+    }
+
+    #[test]
+    fn warrior_pushes_a_chain_two_tiles_while_moving_one() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 7, 0);
+        let warrior = spawn_player(&mut app, 1, 0, PlayerClass::Warrior);
+        let first_box = spawn_box(&mut app, 2, 0);
+        let second_box = spawn_box(&mut app, 3, 0);
+
+        move_player(&mut app, warrior, IVec2::X);
+
+        assert_eq!(position_of(&mut app, warrior), position(2, 0));
+        assert_eq!(position_of(&mut app, first_box), position(4, 0));
+        assert_eq!(position_of(&mut app, second_box), position(5, 0));
+        assert_eq!(history_snapshot_count(&mut app), 3);
+    }
+
+    #[test]
+    fn warrior_cannot_push_if_the_two_tile_path_is_blocked() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 3, 0);
+        spawn_wall(&mut app, 4, 0);
+        let warrior = spawn_player(&mut app, 1, 0, PlayerClass::Warrior);
+        let box_entity = spawn_box(&mut app, 2, 0);
+
+        move_player(&mut app, warrior, IVec2::X);
+
+        assert_eq!(position_of(&mut app, warrior), position(1, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(2, 0));
+        assert_eq!(history_snapshot_count(&mut app), 0);
+    }
+
+    #[test]
+    fn warrior_does_not_push_into_a_box_beyond_a_gap() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 6, 0);
+        let warrior = spawn_player(&mut app, 1, 0, PlayerClass::Warrior);
+        let first_box = spawn_box(&mut app, 2, 0);
+        let second_box = spawn_box(&mut app, 4, 0);
+
+        move_player(&mut app, warrior, IVec2::X);
+
+        assert_eq!(position_of(&mut app, warrior), position(1, 0));
+        assert_eq!(position_of(&mut app, first_box), position(2, 0));
+        assert_eq!(position_of(&mut app, second_box), position(4, 0));
+        assert_eq!(history_snapshot_count(&mut app), 0);
+    }
+
+    #[test]
+    fn wizard_swaps_with_a_box_at_a_distance() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 6, 0);
+        let wizard = spawn_player(&mut app, 1, 0, PlayerClass::Wizard);
+        let box_entity = spawn_box(&mut app, 4, 0);
+
+        move_player(&mut app, wizard, IVec2::X);
+
+        assert_eq!(position_of(&mut app, wizard), position(4, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(1, 0));
+        assert_eq!(translation_of(&mut app, wizard).x, 4.0 * TILE_SIZE);
+        assert_eq!(translation_of(&mut app, box_entity).x, 1.0 * TILE_SIZE);
+        assert_eq!(history_snapshot_count(&mut app), 2);
+    }
+
+    #[test]
+    fn wizard_moves_one_tile_when_no_box_is_in_the_direction() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 4, 0);
+        let wizard = spawn_player(&mut app, 1, 0, PlayerClass::Wizard);
+
+        move_player(&mut app, wizard, IVec2::X);
+
+        assert_eq!(position_of(&mut app, wizard), position(2, 0));
+        assert_eq!(history_snapshot_count(&mut app), 1);
+    }
+
+    #[test]
+    fn wizard_does_not_swap_through_a_wall() {
+        let mut app = test_app();
+        spawn_row(&mut app, 0, 2, 0);
+        spawn_row(&mut app, 4, 5, 0);
+        spawn_wall(&mut app, 3, 0);
+        let wizard = spawn_player(&mut app, 1, 0, PlayerClass::Wizard);
+        let box_entity = spawn_box(&mut app, 4, 0);
+
+        move_player(&mut app, wizard, IVec2::X);
+
+        assert_eq!(position_of(&mut app, wizard), position(2, 0));
+        assert_eq!(position_of(&mut app, box_entity), position(4, 0));
+        assert_eq!(history_snapshot_count(&mut app), 1);
+    }
+}
