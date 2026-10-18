@@ -19,7 +19,8 @@ type CellQuery<'w, 's> = Query<
 >;
 
 /// Resolves movement according to the active character's ability.
-/// Dwarves push contiguous chains; wizards swap with the first object in a ray.
+/// Dwarves and warriors push chains; wizards swap with a distant object, while
+/// telekinetics push the first object in their direction without moving to it.
 pub fn character_movement_system(
     mut move_events: EventReader<PlayerMoveEvent>,
     mut action_history: ResMut<ActionHistory>,
@@ -102,6 +103,29 @@ pub fn character_movement_system(
                 } else {
                     destination
                 }
+            }
+            PlayerClass::Telekinetic => {
+                if let Some(object) =
+                    first_object_in_ray(destination, direction, player, &queries.p1())
+                {
+                    if !has_clear_push_path(
+                        object.grid_position,
+                        direction,
+                        1,
+                        player,
+                        &queries.p1(),
+                    ) {
+                        continue;
+                    }
+
+                    snapshots.push(object.clone());
+                    let mut objects = queries.p2();
+                    let Ok((mut position, mut transform)) = objects.get_mut(object.entity) else {
+                        continue;
+                    };
+                    translate(&mut position, &mut transform, direction);
+                }
+                destination
             }
         };
 

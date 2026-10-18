@@ -10,4 +10,5 @@ pub enum PlayerClass {
     Dwarf,
     Wizard,
     Warrior,
+    Telekinetic,
 }
