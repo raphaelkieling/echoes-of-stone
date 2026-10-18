@@ -8,9 +8,19 @@ local Playing = {}
 Playing.__index = Playing
 local FOLLOW_ZOOM = 1.8
 local CAMERA_SMOOTHING = 9
+local MOVE_REPEAT_DELAY = 0.3
+local MOVE_REPEAT_INTERVAL = 0.12
 
 function Playing.new(game)
-    return setmetatable({game = game, camera = cameraLib(0, 0, 1), history = ActionHistory(), levelIndex = 1, transition = nil}, Playing)
+    return setmetatable({
+        game = game,
+        camera = cameraLib(0, 0, 1),
+        history = ActionHistory(),
+        levelIndex = 1,
+        transition = nil,
+        heldMoveKey = nil,
+        moveRepeatTimer = 0,
+    }, Playing)
 end
 
 function Playing:enter(levelIndex)
@@ -24,6 +34,8 @@ end
 
 function Playing:loadLevel()
     local level = assert(self.levels[self.levelIndex], "level index out of range")
+    self.heldMoveKey = nil
+    self.moveRepeatTimer = 0
     self.levelPath = level.path
     self.board = LevelLoader.load(level.path, self.game.assets)
     self.history:clear()
@@ -83,6 +95,7 @@ function Playing:update(dt)
         if self.transition.elapsed >= self.transition.duration then self.transition = nil end
     end
     if self.board then self.board:update(dt) end
+    self:updateHeldMovement(dt)
     if self.board then
         local targetX, targetY, targetZoom = self:cameraTarget()
         local smooth = 1 - math.exp(-CAMERA_SMOOTHING * dt)
@@ -93,6 +106,25 @@ function Playing:update(dt)
     if not self.paused and self.board and not self.board:isMoving() and self.board:allBoxesOnTargets() then
         self:advanceLevel()
     end
+end
+
+function Playing:updateHeldMovement(dt)
+    if not self.heldMoveKey then return end
+    if not love.keyboard.isDown(self.heldMoveKey) then
+        self.heldMoveKey = nil
+        self.moveRepeatTimer = 0
+        return
+    end
+    if self.paused then return end
+    self.moveRepeatTimer = self.moveRepeatTimer - dt
+    if self.moveRepeatTimer > 0 or self.transition or self.board:isMoving() then return end
+
+    local direction = Keymap.direction(self.heldMoveKey)
+    local player = self:currentPlayer()
+    if direction and player then
+        CharacterMovement.move(self.board, player, direction, self.history)
+    end
+    self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
 function Playing:draw()
@@ -151,9 +183,24 @@ function Playing:keypressed(key)
         elseif Keymap.matches("cancel", key) and not self.completed then self.paused = false end
         return
     end
-    if Keymap.matches("pause", key) then self.paused, self.pauseSelection = true, 1; return end
+    if Keymap.matches("pause", key) then
+        self.heldMoveKey = nil
+        self.moveRepeatTimer = 0
+        self.paused, self.pauseSelection = true, 1
+        return
+    end
     if Keymap.matches("toggleMapView", key) then
         self.cameraMode = self.cameraMode == "map" and "follow" or "map"
+        return
+    end
+    local direction = Keymap.direction(key)
+    if direction then
+        self.heldMoveKey = key
+        self.moveRepeatTimer = MOVE_REPEAT_DELAY
+        if not self.board:isMoving() and not self.transition then
+            local player = self:currentPlayer()
+            if player then CharacterMovement.move(self.board, player, direction, self.history) end
+        end
         return
     end
     if self.board:isMoving() or self.transition then return end
@@ -161,9 +208,6 @@ function Playing:keypressed(key)
         if #self.board.players > 0 then self.activeIndex = self.activeIndex % #self.board.players + 1 end
     elseif Keymap.matches("undo", key) then
         self.history:undo()
-    elseif Keymap.direction(key) then
-        local player = self:currentPlayer()
-        if player then CharacterMovement.move(self.board, player, Keymap.direction(key), self.history) end
     end
 end
 
