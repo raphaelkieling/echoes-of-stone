@@ -83,17 +83,45 @@
             "scaleInDock": 1
         },
         "level4.tmj": {
-            "scale": 0.7738,
+            "scale": 0.9866,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 279.1418971310416,
-                "y": 122.1245799948307
+                "x": 228.05594972633287,
+                "y": 164.70707480235149
             }
         },
         "level4.tmj#rogues": {
             "scaleInDock": 1
         },
         "level4.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level5.tmj": {
+            "scale": 1.0529,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 257.3843669864185,
+                "y": 210.3713553043974
+            }
+        },
+        "level5.tmj#rogues": {
+            "scaleInDock": 1
+        },
+        "level5.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level6.tmj": {
+            "scale": 0.60265625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 320.24889810733725,
+                "y": 319.4192377495463
+            }
+        },
+        "level6.tmj#rogues": {
+            "scaleInDock": 1
+        },
+        "level6.tmj#tiles": {
             "scaleInDock": 1
         },
         "level_playground.tmj": {

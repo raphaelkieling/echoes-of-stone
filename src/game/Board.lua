@@ -173,16 +173,20 @@ function Board:draw(activePlayer)
         local characterClass = activePlayer:getComponent("CharacterClass")
         if characterClass and characterClass.behavior.id == Player.Classes.MYSTERIOUS_PRIEST then
             local transform = activePlayer:getComponent("Transform")
-            local pulse = (math.sin(love.timer.getTime() * 2) + 1) / 2
-            local auraSize = transform.cellSize * 3 * (1 - pulse * 0.008)
+            local pulse = (math.sin(love.timer.getTime() * 3.2) + 1) / 2
+            local auraSize = transform.cellSize * 3 * (0.96 + pulse * 0.04)
+            local cornerRadius = transform.cellSize * (0.12 + pulse * 0.02)
             love.graphics.push("all")
-            love.graphics.setColor(0.35, 0.9, 1, 0.68 + pulse * 0.1)
-            love.graphics.setLineWidth(1.5 + pulse * 0.5)
+            love.graphics.setColor(0.35, 0.9, 1, 0.5 + pulse * 0.28)
+            love.graphics.setLineWidth(1.5 + pulse * 1.1)
             love.graphics.rectangle("line",
                 transform.x - auraSize / 2,
                 transform.y - auraSize / 2,
                 auraSize,
-                auraSize)
+                auraSize,
+                cornerRadius,
+                cornerRadius,
+                8)
             love.graphics.pop()
         end
     end
