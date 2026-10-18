@@ -18,7 +18,15 @@ fn main() {
         .init_resource::<resources::ActionHistory>()
         .init_resource::<resources::PlayerSelection>()
         .init_resource::<systems::PlayerOutlineTextures>()
-        .add_systems(Startup, (setup_camera, systems::spawn_level))
+        .init_resource::<systems::LevelTransition>()
+        .add_systems(
+            Startup,
+            (
+                setup_camera,
+                systems::spawn_level,
+                systems::setup_transition_overlay,
+            ),
+        )
         .add_event::<systems::PlayerMoveEvent>()
         .add_event::<systems::LevelWin>()
         .add_systems(
@@ -29,6 +37,8 @@ fn main() {
                 systems::character_movement_system,
                 systems::undo_system,
                 systems::check_level_win_system,
+                systems::begin_level_transition_system,
+                systems::animate_level_transition_system,
                 systems::advance_level_system,
                 systems::spawn_player_outline_system,
                 systems::active_player_outline_system,
@@ -42,7 +52,7 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
-            scale: 0.68,
+            scale: systems::BASE_CAMERA_SCALE,
             ..OrthographicProjection::default_2d()
         }),
     ));

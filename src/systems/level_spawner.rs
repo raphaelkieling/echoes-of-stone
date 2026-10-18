@@ -99,6 +99,22 @@ fn spawn_floor(
     ));
 }
 
+fn spawn_target(
+    commands: &mut Commands,
+    position: Vec3,
+    grid_position: GridPosition,
+    tilemap: Handle<Image>,
+    tilemap_layout: Handle<TextureAtlasLayout>,
+) {
+    commands.spawn((
+        atlas_sprite(tilemap, tilemap_layout, TARGET_TILE_INDEX, TILE_SIZE),
+        tile_transform(position, TARGET_LAYER),
+        Target,
+        LevelEntity,
+        grid_position,
+    ));
+}
+
 pub fn spawn_level(
     mut commands: Commands,
     level_handle: Res<LevelHandle>,
@@ -175,7 +191,7 @@ pub(crate) fn spawn_level_contents(
                         grid_position,
                     ));
                 }
-                '#' => {
+                '#' | '*' => {
                     spawn_floor(
                         commands,
                         position,
@@ -183,6 +199,15 @@ pub(crate) fn spawn_level_contents(
                         tilemap.clone(),
                         tilemap_layout.clone(),
                     );
+                    if ch == '*' {
+                        spawn_target(
+                            commands,
+                            position,
+                            grid_position,
+                            tilemap.clone(),
+                            tilemap_layout.clone(),
+                        );
+                    }
                     commands.spawn((
                         atlas_sprite(
                             tilemap.clone(),
@@ -231,18 +256,13 @@ pub(crate) fn spawn_level_contents(
                         tilemap.clone(),
                         tilemap_layout.clone(),
                     );
-                    commands.spawn((
-                        atlas_sprite(
-                            tilemap.clone(),
-                            tilemap_layout.clone(),
-                            TARGET_TILE_INDEX,
-                            TILE_SIZE,
-                        ),
-                        tile_transform(position, TARGET_LAYER),
-                        Target,
-                        LevelEntity,
+                    spawn_target(
+                        commands,
+                        position,
                         grid_position,
-                    ));
+                        tilemap.clone(),
+                        tilemap_layout.clone(),
+                    );
                 }
                 ' ' => spawn_floor(
                     commands,

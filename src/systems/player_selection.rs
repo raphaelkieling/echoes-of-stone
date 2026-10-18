@@ -2,13 +2,18 @@ use bevy::prelude::*;
 
 use crate::components::Player;
 use crate::resources::PlayerSelection;
+use crate::systems::LevelTransition;
 
 /// Keeps a valid active player and cycles through all players when G is pressed.
 pub fn switch_active_player_system(
     keyboard: Res<ButtonInput<KeyCode>>,
     players: Query<Entity, With<Player>>,
     mut selection: ResMut<PlayerSelection>,
+    transition: Res<LevelTransition>,
 ) {
+    if transition.is_active() {
+        return;
+    }
     let mut player_entities: Vec<Entity> = players.iter().collect();
     player_entities.sort_by_key(|entity| entity.to_bits());
 

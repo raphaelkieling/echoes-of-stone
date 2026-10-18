@@ -2,14 +2,16 @@ use bevy::prelude::*;
 
 use crate::components::GridPosition;
 use crate::resources::ActionHistory;
+use crate::systems::LevelTransition;
 
 /// Restores the previous completed action when the player presses Z.
 pub fn undo_system(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut action_history: ResMut<ActionHistory>,
     mut entities: Query<(&mut GridPosition, &mut Transform)>,
+    transition: Res<LevelTransition>,
 ) {
-    if !keyboard.just_pressed(KeyCode::KeyZ) {
+    if transition.is_active() || !keyboard.just_pressed(KeyCode::KeyZ) {
         return;
     }
 

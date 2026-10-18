@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::resources::PlayerSelection;
+use crate::systems::LevelTransition;
 
 /// A single grid step requested by the player.
 #[derive(Event, Clone, Copy, Debug)]
@@ -13,8 +14,12 @@ pub fn player_movement_system(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut move_events: EventWriter<PlayerMoveEvent>,
     selection: Res<PlayerSelection>,
+    transition: Res<LevelTransition>,
 ) {
-    if keyboard.just_pressed(KeyCode::KeyG) || selection.active_player.is_none() {
+    if transition.is_active()
+        || keyboard.just_pressed(KeyCode::KeyG)
+        || selection.active_player.is_none()
+    {
         return;
     }
 

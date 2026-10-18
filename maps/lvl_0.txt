@@ -1,5 +1,5 @@
-WWWWWWWWW
-W1    F2W
-W  #    W
-W       W
-WWWWWWWWW
+WWWWWWWW
+W      W
+W 1#F  W
+W      W
+WWWWWWWW

@@ -1,7 +1,5 @@
-WWWWWWWWWWW
-W3        W
-W  F F    W
-W  # # 1  W
-W   1     W
-W         W
-WWWWWWWWWWW
+WWWWWWWW
+W      W
+W 1#*F W
+W      W
+WWWWWWWW
