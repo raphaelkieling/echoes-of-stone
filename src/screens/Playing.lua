@@ -5,6 +5,7 @@ local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
 local BuildConfig = require("src.settings.BuildConfig")
 local UI = require("src.ui.Theme")
+local UndoHistoryOverlay = require("src.dev.UndoHistoryOverlay")
 
 local Playing = {}
 Playing.__index = Playing
@@ -172,6 +173,10 @@ function Playing:draw()
     if not self.board then return end
     self.camera:attach()
     self.board:draw(self:currentPlayer())
+    local undoPaths
+    if self.board.debugShowUndoHistory then
+        undoPaths = UndoHistoryOverlay.drawWorld(self.board, self.history.actions)
+    end
     self.camera:detach()
 
     local width, height = love.graphics.getDimensions()
@@ -187,6 +192,7 @@ function Playing:draw()
     if self.paused then self:drawPause() end
     self:drawDevelopmentFilename(width, height, scale)
     self.mobileControls:draw()
+    if undoPaths then UndoHistoryOverlay.drawLegend(undoPaths) end
 end
 
 function Playing:mobileAction(action)

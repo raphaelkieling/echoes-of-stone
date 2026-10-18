@@ -24,6 +24,23 @@ local function findLevelIndex(levels, query)
 end
 
 function ConsoleCommands.register(console)
+	console:registerCommand("show-undo-history", "show player paths for each undo", function(context, args)
+		local board = context and context.board
+		if not board then return "No active board." end
+
+		local mode = (args[1] or "toggle"):lower()
+		if mode == "on" then
+			board.debugShowUndoHistory = true
+		elseif mode == "off" then
+			board.debugShowUndoHistory = false
+		elseif mode == "toggle" then
+			board.debugShowUndoHistory = not board.debugShowUndoHistory
+		else
+			return "Usage: show-undo-history [on|off|toggle]"
+		end
+		return "Undo history " .. (board.debugShowUndoHistory and "on" or "off") .. "."
+	end)
+
 	console:registerCommand("mobile-controls", "show or hide mobile touch controls", function(context, args)
 		local game = context and context.game
 		if not game or not game.mobileControls then return "Mobile controls are unavailable." end

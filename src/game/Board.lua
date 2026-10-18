@@ -24,6 +24,7 @@ function Board:init(assets, width, height)
     self.targets = {}
     self.renderTiles = {}
     self.debugShowSolid = false
+    self.debugShowUndoHistory = false
     self.tiledMap = false
 end
 

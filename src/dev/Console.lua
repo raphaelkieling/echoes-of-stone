@@ -172,10 +172,18 @@ end
 function Console:draw()
     if not self.open then return end
 
-    local screenWidth = love.graphics.getWidth()
+    local screenWidth, screenHeight = love.graphics.getDimensions()
     local width = math.min(screenWidth - 32, 880)
     local x = (screenWidth - width) / 2
-    local y, height = 24, 184
+    local prefix = self.input:match("^%s*(.-)%s*$") or ""
+    local matches = self:matchingCommands(prefix)
+    local y = 24
+    local rowHeight = 22
+    local maxHeight = math.max(150, screenHeight - 48)
+    local height = math.min(maxHeight, 110 + #matches * rowHeight)
+    local visibleCount = math.max(1, math.floor((height - 110) / rowHeight))
+    local firstIndex = math.max(1, math.min(self.suggestionSelection, #matches - visibleCount + 1))
+    local lastIndex = math.min(#matches, firstIndex + visibleCount - 1)
     love.graphics.push("all")
     love.graphics.setColor(0.008, 0.018, 0.018, 0.98)
     love.graphics.rectangle("fill", x, y, width, height)
@@ -190,12 +198,10 @@ function Console:draw()
     Fonts.set(29)
     love.graphics.print("> " .. self.input .. "_", x + 18, y + 37)
 
-    local prefix = self.input:match("^%s*(.-)%s*$") or ""
-    local matches = self:matchingCommands(prefix)
     Fonts.set(19)
-    for index = 1, math.min(#matches, 3) do
+    for index = firstIndex, lastIndex do
         local command = matches[index]
-        local rowY = y + 76 + (index - 1) * 22
+        local rowY = y + 76 + (index - firstIndex) * rowHeight
         local selected = index == self.suggestionSelection
         if selected then
             love.graphics.setColor(0.055, 0.19, 0.12, 0.78)
