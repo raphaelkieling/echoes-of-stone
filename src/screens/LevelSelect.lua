@@ -1,4 +1,5 @@
 local LevelLoader = require("src.game.LevelLoader")
+local Keymap = require("src.settings.Keymap")
 
 local LevelSelect = {}
 LevelSelect.__index = LevelSelect
@@ -19,13 +20,13 @@ function LevelSelect:draw()
 end
 
 function LevelSelect:keypressed(key)
-    if key == "escape" then
+    if Keymap.matches("cancel", key) then
         self.game.scenes:switch("menu")
-    elseif key == "up" or key == "w" then
+    elseif Keymap.matches("menuUp", key) then
         self.selected = (self.selected - 2) % #self.levels + 1
-    elseif key == "down" or key == "s" then
+    elseif Keymap.matches("menuDown", key) then
         self.selected = self.selected % #self.levels + 1
-    elseif key == "return" or key == "kpenter" then
+    elseif Keymap.matches("confirm", key) then
         if self.levels[self.selected] then
             self.game.scenes:switch("playing", self.selected)
         end

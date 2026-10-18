@@ -2,16 +2,10 @@ local cameraLib = require("vendor.hump.camera")
 local CharacterMovement = require("src.game.CharacterMovement")
 local ActionHistory = require("src.game.ActionHistory")
 local LevelLoader = require("src.game.LevelLoader")
+local Keymap = require("src.settings.Keymap")
 
 local Playing = {}
 Playing.__index = Playing
-
-local DIRECTIONS = {
-    up = {x = 0, y = -1}, w = {x = 0, y = -1},
-    down = {x = 0, y = 1}, s = {x = 0, y = 1},
-    left = {x = -1, y = 0}, a = {x = -1, y = 0},
-    right = {x = 1, y = 0}, d = {x = 1, y = 0},
-}
 
 function Playing.new(game)
     return setmetatable({game = game, camera = cameraLib(0, 0, 1), history = ActionHistory(), levelIndex = 1, transition = nil}, Playing)
@@ -82,7 +76,8 @@ function Playing:draw()
     love.graphics.setColor(0.93, 0.93, 0.9, 1)
     local player = self:currentPlayer()
     if player then
-        love.graphics.print("Player: " .. player:getComponent("Player").className .. "  (G switch, Z undo, Esc menu)", 16, 14)
+        local characterClass = player:getComponent("CharacterClass").behavior
+        love.graphics.print("Player: " .. characterClass.name .. "  (" .. Keymap.gameplayHint() .. ")", 16, 14)
     end
     love.graphics.print(self.levelPath or "", 16, 36)
 
@@ -122,21 +117,21 @@ end
 
 function Playing:keypressed(key)
     if self.paused then
-        if key == "up" or key == "w" then self.pauseSelection = (self.pauseSelection - 2) % 4 + 1
-        elseif key == "down" or key == "s" then self.pauseSelection = self.pauseSelection % 4 + 1
-        elseif key == "return" or key == "kpenter" then self:choosePauseOption()
-        elseif key == "escape" and not self.completed then self.paused = false end
+        if Keymap.matches("menuUp", key) then self.pauseSelection = (self.pauseSelection - 2) % 4 + 1
+        elseif Keymap.matches("menuDown", key) then self.pauseSelection = self.pauseSelection % 4 + 1
+        elseif Keymap.matches("confirm", key) then self:choosePauseOption()
+        elseif Keymap.matches("cancel", key) and not self.completed then self.paused = false end
         return
     end
-    if key == "escape" then self.paused, self.pauseSelection = true, 1; return end
+    if Keymap.matches("pause", key) then self.paused, self.pauseSelection = true, 1; return end
     if self.board:isMoving() or self.transition then return end
-    if key == "g" then
+    if Keymap.matches("switchPlayer", key) then
         if #self.board.players > 0 then self.activeIndex = self.activeIndex % #self.board.players + 1 end
-    elseif key == "z" then
+    elseif Keymap.matches("undo", key) then
         self.history:undo()
-    elseif DIRECTIONS[key] then
+    elseif Keymap.direction(key) then
         local player = self:currentPlayer()
-        if player then CharacterMovement.move(self.board, player, DIRECTIONS[key], self.history) end
+        if player then CharacterMovement.move(self.board, player, Keymap.direction(key), self.history) end
     end
 end
 

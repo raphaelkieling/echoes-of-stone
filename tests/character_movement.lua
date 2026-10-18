@@ -3,6 +3,7 @@ local GameObject = require("src.core.GameObject")
 local Transform = require("src.components.Transform")
 local InteractiveObject = require("src.components.InteractiveObject")
 local Player = require("src.components.Player")
+local CharacterClasses = require("src.characters.Classes")
 local Box = require("src.components.Box")
 local CharacterMovement = require("src.game.CharacterMovement")
 local ActionHistory = require("src.game.ActionHistory")
@@ -17,11 +18,13 @@ local function makeBoard(xStart, xEnd, y, walls)
     return board
 end
 
-local function spawnPlayer(board, x, y, className)
+local function spawnPlayer(board, x, y, classId)
     local player = GameObject("test-player")
     player:addComponent(Transform(x, y, 64, 3))
     player:addComponent(InteractiveObject())
-    player:addComponent(Player(className))
+    local playerComponent = Player()
+    player:addComponent(playerComponent)
+    playerComponent:setClass(CharacterClasses.create(classId))
     board:addObject(player)
     return player
 end
@@ -92,6 +95,16 @@ function tests.wizard_swaps_with_first_object_in_ray()
     local box = spawnBox(board, 4, 0)
     assert(run(board, wizard, {x = 1, y = 0}))
     assertPosition(wizard, 4, 0)
+    assertPosition(box, 1, 0)
+end
+
+function tests.player_can_change_class_and_use_the_new_ability()
+    local board = makeBoard(0, 6, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local box = spawnBox(board, 4, 0)
+    player:getComponent("Player"):setClass(Player.Classes.WIZARD)
+    assert(run(board, player, {x = 1, y = 0}))
+    assertPosition(player, 4, 0)
     assertPosition(box, 1, 0)
 end
 

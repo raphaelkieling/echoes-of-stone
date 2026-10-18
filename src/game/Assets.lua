@@ -26,14 +26,20 @@ function Assets.new()
     }, Assets)
 end
 
-function Assets:tileRenderer(tileX, tileY, scale, layer)
-    local animation = anim8.newAnimation(self.tileGrid(tileX + 1, tileY + 1), 1)
-    return SpriteRenderer(self.tiles, animation, scale or 2, layer)
+function Assets:tileRenderer(scale, layer)
+    return SpriteRenderer(self.tiles, scale or 2, layer)
 end
 
-function Assets:playerRenderer(tileX, tileY)
-    local animation = anim8.newAnimation(self.playerGrid(tileX + 1, tileY + 1), 1)
-    return SpriteRenderer(self.players, animation, 2.25, 3, self.outlineShader)
+function Assets:tileAnimation(tileX, tileY)
+    return anim8.newAnimation(self.tileGrid(tileX + 1, tileY + 1), 1)
+end
+
+function Assets:playerAnimation(tileX, tileY)
+    return anim8.newAnimation(self.playerGrid(tileX + 1, tileY + 1), 1)
+end
+
+function Assets:playerRenderer(scale, layer)
+    return SpriteRenderer(self.players, scale or 2.25, layer or 3, self.outlineShader)
 end
 
 return Assets

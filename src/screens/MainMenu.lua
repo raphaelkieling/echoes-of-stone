@@ -1,5 +1,6 @@
 local MainMenu = {}
 MainMenu.__index = MainMenu
+local Keymap = require("src.settings.Keymap")
 
 function MainMenu.new(game)
     return setmetatable({game = game, selected = 1, options = {"Start", "Quit"}}, MainMenu)
@@ -16,9 +17,9 @@ function MainMenu:draw()
 end
 
 function MainMenu:keypressed(key)
-    if key == "up" or key == "w" or key == "down" or key == "s" then
+    if Keymap.matches("menuUp", key) or Keymap.matches("menuDown", key) then
         self.selected = self.selected == 1 and 2 or 1
-    elseif key == "return" or key == "kpenter" then
+    elseif Keymap.matches("confirm", key) then
         if self.selected == 1 then
             self.game.scenes:switch("levels")
         else

@@ -1,20 +1,14 @@
 local Class = require("src.core.Class")
 local GameObject = require("src.core.GameObject")
 local Transform = require("src.components.Transform")
+local Animation = require("src.components.Animation")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local InteractiveObject = require("src.components.InteractiveObject")
 local Player = require("src.components.Player")
 local Box = require("src.components.Box")
+local CharacterClasses = require("src.characters.Classes")
 
 local Board = Class:extend()
-
-local PLAYER_SPRITES = {
-    [Player.Classes.DWARF] = {0, 0},
-    [Player.Classes.WIZARD] = {1, 4},
-    [Player.Classes.WARRIOR] = {4, 1},
-    [Player.Classes.TELEKINETIC] = {2, 0},
-    [Player.Classes.SORCERER] = {3, 4},
-}
 
 function Board:init(assets, width, height)
     self.assets = assets
@@ -54,13 +48,17 @@ function Board:addObject(object)
     return object
 end
 
-function Board:spawnPlayer(className, x, y)
-    local spriteCoords = assert(PLAYER_SPRITES[className], "unknown player class: " .. tostring(className))
-    local object = GameObject("Player " .. className)
+function Board:spawnPlayer(classId, x, y)
+    local characterClass = CharacterClasses.create(classId)
+    local sprite = characterClass.sprite
+    local object = GameObject("Player " .. characterClass.name)
     object:addComponent(Transform(x, y, 64, 3))
     object:addComponent(InteractiveObject())
-    object:addComponent(Player(className))
-    object:addComponent(self.assets:playerRenderer(spriteCoords[1], spriteCoords[2]))
+    local player = Player()
+    object:addComponent(player)
+    player:setClass(characterClass)
+    object:addComponent(Animation(self.assets:playerAnimation(sprite.x, sprite.y)))
+    object:addComponent(self.assets:playerRenderer(sprite.scale, 3))
     return self:addObject(object)
 end
 
@@ -69,7 +67,8 @@ function Board:spawnBox(x, y)
     object:addComponent(Transform(x, y, 64, 2))
     object:addComponent(InteractiveObject())
     object:addComponent(Box())
-    object:addComponent(self.assets:tileRenderer(6, 17, 2, 2))
+    object:addComponent(Animation(self.assets:tileAnimation(6, 17)))
+    object:addComponent(self.assets:tileRenderer(2, 2))
     return self:addObject(object)
 end
 
