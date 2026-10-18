@@ -24,6 +24,24 @@ local function findLevelIndex(levels, query)
 end
 
 function ConsoleCommands.register(console)
+	console:registerCommand("mobile-controls", "show or hide mobile touch controls", function(context, args)
+		local game = context and context.game
+		if not game or not game.mobileControls then return "Mobile controls are unavailable." end
+		local mode = (args[1] or "toggle"):lower()
+		if mode == "on" then
+			game.mobileControls.enabled = true
+		elseif mode == "off" then
+			game.mobileControls.enabled = false
+			game.mobileControls:resetTouches()
+		elseif mode == "toggle" then
+			game.mobileControls.enabled = not game.mobileControls.enabled
+			if not game.mobileControls.enabled then game.mobileControls:resetTouches() end
+		else
+			return "Usage: mobile-controls [on|off|toggle]"
+		end
+		return "Mobile controls " .. (game.mobileControls.enabled and "on" or "off") .. "."
+	end)
+
 	console:registerCommand("force reload", "restart the game and reload assets and levels", function(context)
 		if not context or not context.game or not love then
 			return "Game reload is unavailable."

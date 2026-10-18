@@ -7,6 +7,7 @@ local About = require("src.screens.About")
 local Playing = require("src.screens.Playing")
 local Fonts = require("src.ui.Fonts")
 local BuildConfig = require("src.settings.BuildConfig")
+local MobileControls = require("src.input.MobileControls")
 
 local Game = {}
 Game.__index = Game
@@ -14,9 +15,11 @@ Game.__index = Game
 function Game.new()
     local self = setmetatable({}, Game)
     self.assets = Assets.new()
+    self.mobileControls = MobileControls.new()
     self.scenes = SceneManager(self)
     self.crt = CRT()
     self.completedLevels = {}
+    self.mobileControls = MobileControls.new()
     if BuildConfig.developmentMode then
         local Console = require("src.dev.Console")
         local ConsoleCommands = require("src.dev.ConsoleCommands")
@@ -58,6 +61,9 @@ function Game:keypressed(key, scancode, isrepeat)
             if action == "opened" and currentScene and currentScene.clearHeldMovement then
                 currentScene:clearHeldMovement()
             end
+            if action == "opened" and self.mobileControls then
+                self.mobileControls:resetTouches()
+            end
             return
         end
     end
@@ -70,6 +76,40 @@ end
 function Game:resize(width, height)
     self.crt:resize(width, height)
     self.scenes:resize(width, height)
+end
+
+function Game:touchpressed(id, x, y)
+	if self.console and self.console.open then return end
+	if self.scenes.current and self.scenes.current.touchpressed then
+		self.scenes.current:touchpressed(id, x, y)
+	end
+end
+
+function Game:touchmoved(id, x, y)
+	if self.scenes.current and self.scenes.current.touchmoved then
+		self.scenes.current:touchmoved(id, x, y)
+	end
+end
+
+function Game:touchreleased(id)
+	if self.scenes.current and self.scenes.current.touchreleased then
+		self.scenes.current:touchreleased(id)
+	end
+end
+
+function Game:mousepressed(x, y, button, isTouch)
+	if isTouch or button ~= 1 or (self.console and self.console.open) then return end
+	self:touchpressed("mouse", x, y)
+end
+
+function Game:mousemoved(x, y, dx, dy, isTouch)
+	if isTouch then return end
+	self:touchmoved("mouse", x, y)
+end
+
+function Game:mousereleased(x, y, button, isTouch)
+	if isTouch or button ~= 1 then return end
+	self:touchreleased("mouse")
 end
 
 return Game

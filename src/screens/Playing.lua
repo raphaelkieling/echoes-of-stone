@@ -16,6 +16,7 @@ local MOVE_REPEAT_INTERVAL = 0.12
 function Playing.new(game)
     return setmetatable({
         game = game,
+        mobileControls = game.mobileControls,
         camera = cameraLib(0, 0, 1),
         history = ActionHistory(),
         levelIndex = 1,
@@ -29,6 +30,7 @@ function Playing:enter(levelIndex)
     self.levels = LevelLoader.listLevels()
     self.levelIndex = levelIndex or 1
     self.cameraMode = "map"
+    self.mobileControls:resetTouches()
     self:loadLevel()
     self.paused = false
     self.pauseSelection = 1
@@ -112,22 +114,53 @@ function Playing:update(dt)
 end
 
 function Playing:updateHeldMovement(dt)
-    if not self.heldMoveKey then return end
-    if not love.keyboard.isDown(self.heldMoveKey) then
-        self.heldMoveKey = nil
-        self.moveRepeatTimer = 0
-        return
-    end
-    if self.paused then return end
-    self.moveRepeatTimer = self.moveRepeatTimer - dt
-    if self.moveRepeatTimer > 0 or self.transition or self.board:isMoving() then return end
+	if self.paused then return end
+	if self.heldMoveKey then
+		if not love.keyboard.isDown(self.heldMoveKey) then
+			self.heldMoveKey = nil
+			self.moveRepeatTimer = 0
+		else
+			self:updateKeyboardMovement(dt)
+			return
+		end
+	end
+	self:updateMobileMovement(dt)
+end
+
+function Playing:updateKeyboardMovement(dt)
+	self.moveRepeatTimer = self.moveRepeatTimer - dt
+	if self.moveRepeatTimer > 0 or self.transition or self.board:isMoving() then return end
 
     local direction = Keymap.direction(self.heldMoveKey)
     local player = self:currentPlayer()
     if direction and player then
         CharacterMovement.move(self.board, player, direction, self.history)
     end
-    self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
+	self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
+end
+
+function Playing:updateMobileMovement(dt)
+	local direction = self.mobileControls:getDirection()
+	if not direction then
+		self.mobileMoveDirection = nil
+		self.moveRepeatTimer = 0
+		return
+	end
+	local directionKey = direction.x .. ":" .. direction.y
+	if directionKey ~= self.mobileMoveDirection then
+		self.mobileMoveDirection = directionKey
+		self.moveRepeatTimer = MOVE_REPEAT_DELAY
+		if not self.transition and not self.board:isMoving() then
+			local player = self:currentPlayer()
+			if player then CharacterMovement.move(self.board, player, direction, self.history) end
+		end
+		return
+	end
+	self.moveRepeatTimer = self.moveRepeatTimer - dt
+	if self.moveRepeatTimer > 0 or self.transition or self.board:isMoving() then return end
+	local player = self:currentPlayer()
+	if player then CharacterMovement.move(self.board, player, direction, self.history) end
+	self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
 function Playing:clearHeldMovement()
@@ -153,6 +186,40 @@ function Playing:draw()
     if not self.paused then self:drawLevelTimeline() end
     if self.paused then self:drawPause() end
     self:drawDevelopmentFilename(width, height, scale)
+    self.mobileControls:draw()
+end
+
+function Playing:mobileAction(action)
+	if action == "a" then
+		if self.paused then
+			self:choosePauseOption()
+		elseif not self.board:isMoving() and not self.transition and #self.board.players > 0 then
+			self.activeIndex = self.activeIndex % #self.board.players + 1
+		end
+	elseif action == "b" then
+		if self.paused then
+			if self.completed then
+				self.game.scenes:switch("levels")
+			else
+				self.paused = false
+			end
+		elseif not self.board:isMoving() and not self.transition then
+			self.history:undo()
+		end
+	end
+end
+
+function Playing:touchpressed(id, x, y)
+	local action = self.mobileControls:touchpressed(id, x, y)
+	if action then self:mobileAction(action) end
+end
+
+function Playing:touchmoved(id, x, y)
+	self.mobileControls:touchmoved(id, x, y)
+end
+
+function Playing:touchreleased(id)
+	self.mobileControls:touchreleased(id)
 end
 
 function Playing:drawDevelopmentFilename(width, height, scale)
