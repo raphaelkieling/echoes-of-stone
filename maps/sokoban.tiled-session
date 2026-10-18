@@ -11,7 +11,7 @@
             "scale": 1.3522656249999998,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 320.2033624126178,
+                "x": 254.75764053382642,
                 "y": 320.2033624126178
             }
         },
@@ -36,7 +36,7 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 233.5,
+                "x": 189.25,
                 "y": 182.5
             }
         },
@@ -61,7 +61,7 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 234,
+                "x": 189.75,
                 "y": 179.5
             }
         },
@@ -75,7 +75,7 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 254,
+                "x": 209.75,
                 "y": 203
             }
         },
@@ -86,11 +86,11 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 2,
-            "selectedLayer": 1,
+            "scale": 1.5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 267,
-                "y": 206
+                "x": 290.3333333333333,
+                "y": 207.33333333333337
             }
         },
         "level_playground.tmj#rogues": {

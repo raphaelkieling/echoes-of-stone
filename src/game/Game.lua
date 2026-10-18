@@ -3,7 +3,9 @@ local Assets = require("src.game.Assets")
 local CRT = require("src.rendering.CRT")
 local MainMenu = require("src.screens.MainMenu")
 local LevelSelect = require("src.screens.LevelSelect")
+local About = require("src.screens.About")
 local Playing = require("src.screens.Playing")
+local Fonts = require("src.ui.Fonts")
 
 local Game = {}
 Game.__index = Game
@@ -15,8 +17,10 @@ function Game.new()
     self.crt = CRT()
     self.scenes:register("menu", MainMenu.new)
     self.scenes:register("levels", LevelSelect.new)
+    self.scenes:register("about", About.new)
     self.scenes:register("playing", Playing.new)
-    self.scenes:switch("levels")
+    Fonts.set(18)
+    self.scenes:switch("menu")
     return self
 end
 

@@ -1,5 +1,6 @@
 local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
+local Fonts = require("src.ui.Fonts")
 
 local LevelSelect = {}
 LevelSelect.__index = LevelSelect
@@ -9,23 +10,20 @@ function LevelSelect.new(game)
         game = game,
         levels = LevelLoader.listLevels(),
         selected = 1,
-        titleFont = love.graphics.newFont(30),
-        levelFont = love.graphics.newFont(21),
-        hintFont = love.graphics.newFont(16),
     }, LevelSelect)
 end
 
 function LevelSelect:draw()
     local width = love.graphics.getWidth()
     love.graphics.setColor(0.93, 0.93, 0.9, 1)
-    love.graphics.setFont(self.titleFont)
+    Fonts.set(42)
     love.graphics.printf("SELECT LEVEL", 0, 32, width, "center")
-    love.graphics.setFont(self.levelFont)
+    Fonts.set(30)
     for index, level in ipairs(self.levels) do
         local label = level.name or string.format("lvl_%d.txt", level.number)
-        love.graphics.print((index == self.selected and "> " or "  ") .. label, 40, 88 + (index - 1) * 36)
+        love.graphics.print((index == self.selected and "> " or "  ") .. label, 40, 96 + (index - 1) * 44)
     end
-    love.graphics.setFont(self.hintFont)
+    Fonts.set(21)
     love.graphics.print("Up/Down: select   Enter: play   Esc: back", 24, love.graphics.getHeight() - 36)
 end
 

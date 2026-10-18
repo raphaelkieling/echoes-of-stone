@@ -3,6 +3,7 @@ local CharacterMovement = require("src.game.CharacterMovement")
 local ActionHistory = require("src.game.ActionHistory")
 local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
+local Fonts = require("src.ui.Fonts")
 
 local Playing = {}
 Playing.__index = Playing
@@ -134,6 +135,7 @@ function Playing:draw()
     self.camera:detach()
 
     love.graphics.setColor(0.93, 0.93, 0.9, 1)
+    Fonts.set(18)
     local player = self:currentPlayer()
     if player then
         local characterClass = player:getComponent("CharacterClass").behavior
@@ -155,8 +157,10 @@ function Playing:drawPause()
     love.graphics.setColor(0, 0, 0, 0.78)
     love.graphics.rectangle("fill", width * 0.25, height * 0.2, width * 0.5, height * 0.6)
     love.graphics.setColor(1, 1, 1, 1)
+    Fonts.set(28)
     love.graphics.printf(self.completed and "All levels complete" or "Paused", 0, height * 0.27, width, "center")
     local options = {"Continue", "Restart", "Levels", "Quit"}
+    Fonts.set(21)
     for index, label in ipairs(options) do
         love.graphics.printf((index == self.pauseSelection and "> " or "  ") .. label, 0, height * 0.38 + (index - 1) * 32, width, "center")
     end
