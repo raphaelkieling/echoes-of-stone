@@ -35,7 +35,9 @@ function Console.new()
 end
 
 function Console:registerCommand(name, description, callback)
-    assert(type(name) == "string" and name:match("^[%w%-]+$"), "invalid console command name")
+	assert(type(name) == "string" and name:match("^[%w%- ]+$")
+		and not name:match("^ ") and not name:match(" $") and not name:match("  "),
+		"invalid console command name")
     assert(type(callback) == "function", "console command callback must be a function")
     self.commands[name] = {name = name, description = description or "", callback = callback}
 end
@@ -55,10 +57,9 @@ function Console:matchingCommands(prefix)
 end
 
 function Console:complete()
-    if self.input:find("%s") then return end
-    local matches = self:matchingCommands(self.input)
-    if #matches == 1 then
-        self.input = matches[1].name .. " "
+	local matches = self:matchingCommands(self.input)
+	if #matches == 1 then
+		self.input = matches[1].name .. " "
     elseif #matches > 1 then
         local names = {}
         for _, command in ipairs(matches) do names[#names + 1] = command.name end
@@ -66,17 +67,30 @@ function Console:complete()
     end
 end
 
-function Console:execute(context)
-    local words = splitWords(self.input)
-    local name = table.remove(words, 1)
-    if not name then return end
-    local command = self.commands[name:lower()]
-    if not command then
-        self:write("Unknown command: " .. name)
-        return
-    end
+function Console:resolveCommand(input)
+	local normalized = input:lower():match("^%s*(.-)%s*$")
+	local selected, arguments
+	for name, command in pairs(self.commands) do
+		local commandName = name:lower()
+		if normalized == commandName then
+			return command, {}
+		elseif normalized:sub(1, #commandName + 1) == commandName .. " "
+			and (not selected or #commandName > #selected.name) then
+			selected = command
+			arguments = splitWords(normalized:sub(#commandName + 1))
+		end
+	end
+	return selected, arguments
+end
 
-    local ok, result = pcall(command.callback, context, words, self)
+function Console:execute(context)
+	local command, arguments = self:resolveCommand(self.input)
+	if not command then
+		self:write("Unknown command: " .. self.input)
+		return
+	end
+
+	local ok, result = pcall(command.callback, context, arguments or {}, self)
     if not ok then
         self:write("Error: " .. tostring(result))
     elseif result then
@@ -104,8 +118,8 @@ function Console:keypressed(key, scancode, context)
     elseif key == "escape" then
         self.open = false
         self.input = ""
-    elseif key == "up" or key == "down" then
-        local prefix = self.input:match("^(%S*)") or ""
+	elseif key == "up" or key == "down" then
+		local prefix = self.input:match("^%s*(.-)%s*$") or ""
         local matches = self:matchingCommands(prefix)
         if #matches > 0 then
             if key == "up" then
@@ -114,16 +128,14 @@ function Console:keypressed(key, scancode, context)
                 self.suggestionSelection = self.suggestionSelection % #matches + 1
             end
         end
-    elseif key == "return" or key == "kpenter" then
-        local commandName = self.input:match("^%s*(%S+)")
-        local hasArguments = self.input:match("^%s*%S+%s+%S+") ~= nil
-        local isCompleteCommand = commandName and self.commands[commandName:lower()]
-        if isCompleteCommand and (hasArguments or self.input:match("^%s*%S+%s*$")) then
-            self:execute(context)
+	elseif key == "return" or key == "kpenter" then
+		local command = self:resolveCommand(self.input)
+		if command then
+			self:execute(context)
             self.input = ""
             self.suggestionSelection = 1
         else
-            local prefix = self.input:match("^(%S*)") or ""
+			local prefix = self.input:match("^%s*(.-)%s*$") or ""
             local matches = self:matchingCommands(prefix)
             local suggestion = matches[self.suggestionSelection]
             if suggestion then
@@ -178,7 +190,7 @@ function Console:draw()
     Fonts.set(29)
     love.graphics.print("> " .. self.input .. "_", x + 18, y + 37)
 
-    local prefix = self.input:match("^(%S*)") or ""
+    local prefix = self.input:match("^%s*(.-)%s*$") or ""
     local matches = self:matchingCommands(prefix)
     Fonts.set(19)
     for index = 1, math.min(#matches, 3) do

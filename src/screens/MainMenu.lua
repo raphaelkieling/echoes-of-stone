@@ -17,8 +17,6 @@ function MainMenu:draw()
     UI.setColor("text")
     UI.setFont(88, width, height)
     love.graphics.printf("ECHOES OF STONE", 0, height * 0.18, width, "center")
-    local ruleWidth = math.min(width * 0.72, 900 * scale)
-    UI.drawDivider((width - ruleWidth) / 2, height * 0.39, ruleWidth)
 
     local panelX, panelY = 44 * scale, height - 290 * scale
     local panelWidth, panelHeight = 360 * scale, 210 * scale

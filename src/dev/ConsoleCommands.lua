@@ -24,7 +24,16 @@ local function findLevelIndex(levels, query)
 end
 
 function ConsoleCommands.register(console)
-    console:registerCommand("show-solid", "toggle outlines for solid cells and objects", function(context, args)
+	console:registerCommand("force reload", "restart the game and reload assets and levels", function(context)
+		if not context or not context.game or not love then
+			return "Game reload is unavailable."
+		end
+
+		local Game = require("src.game.Game")
+		love.game = Game.new()
+	end)
+
+	console:registerCommand("show-solid", "toggle outlines for solid cells and objects", function(context, args)
         local board = context and context.board
         if not board then return "No active board." end
 
