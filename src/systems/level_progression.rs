@@ -24,6 +24,13 @@ impl LevelTransition {
     pub fn is_active(&self) -> bool {
         self.active
     }
+
+    pub fn reset(&mut self) {
+        self.active = false;
+        self.elapsed = 0.0;
+        self.midpoint_reached = false;
+        self.advance_requested = false;
+    }
 }
 
 #[derive(Component)]

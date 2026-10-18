@@ -2,31 +2,21 @@ use bevy::prelude::*;
 
 mod components;
 mod resources;
+mod screens;
 mod systems;
 
 fn main() {
     let levels = systems::load_levels();
-    let first_level = levels.first().cloned().unwrap_or_default();
 
-    App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        // Resources needed by a system must exist before Bevy builds that system.
-        // Startup systems can run in parallel, so inserting this from another
-        // startup system is too late for `spawn_level_system`.
-        .insert_resource(systems::LevelHandle(first_level))
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .insert_resource(systems::LevelHandle::default())
         .insert_resource(resources::LevelProgress::new(levels))
         .init_resource::<resources::ActionHistory>()
         .init_resource::<resources::PlayerSelection>()
         .init_resource::<systems::PlayerOutlineTextures>()
         .init_resource::<systems::LevelTransition>()
-        .add_systems(
-            Startup,
-            (
-                setup_camera,
-                systems::spawn_level,
-                systems::setup_transition_overlay,
-            ),
-        )
+        .add_systems(Startup, (setup_camera, systems::setup_transition_overlay))
         .add_event::<systems::PlayerMoveEvent>()
         .add_event::<systems::LevelWin>()
         .add_systems(
@@ -43,9 +33,12 @@ fn main() {
                 systems::spawn_player_outline_system,
                 systems::active_player_outline_system,
             )
-                .chain(),
+                .chain()
+                .run_if(screens::gameplay_is_active),
         )
-        .run();
+        .add_plugins(screens::GameScreensPlugin);
+
+    app.run();
 }
 
 fn setup_camera(mut commands: Commands) {
