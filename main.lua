@@ -8,5 +8,6 @@ end
 
 function love.update(dt) love.game:update(dt) end
 function love.draw() love.game:draw() end
-function love.keypressed(key) love.game:keypressed(key) end
+function love.keypressed(key, scancode, isrepeat) love.game:keypressed(key, scancode, isrepeat) end
+function love.textinput(text) love.game:textinput(text) end
 function love.resize(width, height) love.game:resize(width, height) end

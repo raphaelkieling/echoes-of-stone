@@ -128,6 +128,11 @@ function Playing:updateHeldMovement(dt)
     self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
+function Playing:clearHeldMovement()
+    self.heldMoveKey = nil
+    self.moveRepeatTimer = 0
+end
+
 function Playing:draw()
     if not self.board then return end
     self.camera:attach()

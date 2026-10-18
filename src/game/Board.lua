@@ -21,6 +21,7 @@ function Board:init(assets, width, height)
     self.boxes = {}
     self.targets = {}
     self.renderTiles = {}
+    self.debugShowSolid = false
     self.tiledMap = false
 end
 
@@ -193,6 +194,26 @@ function Board:draw(activePlayer)
     self.activePlayer = activePlayer or self.activePlayer
     for _, object in ipairs(drawOrder) do
         object:draw({selected = object == activePlayer})
+    end
+
+    if self.debugShowSolid then
+        love.graphics.push("all")
+        love.graphics.setColor(1, 0.24, 0.18, 0.9)
+        love.graphics.setLineWidth(2)
+        for key, cell in pairs(self.cells) do
+            if cell.wall then
+                local x, y = key:match("^(-?%d+):(-?%d+)$")
+                love.graphics.rectangle("line", tonumber(x) * 64 + 2, tonumber(y) * 64 + 2, 60, 60)
+            end
+        end
+        for _, object in ipairs(self.objects) do
+            if object:hasComponent("InteractiveObject") then
+                local transform = object:getComponent("Transform")
+                local size = transform.cellSize - 4
+                love.graphics.rectangle("line", transform.x - size / 2, transform.y - size / 2, size, size)
+            end
+        end
+        love.graphics.pop()
     end
 end
 
