@@ -29,4 +29,8 @@ impl ActionHistory {
     pub fn pop_last(&mut self) -> Option<ActionCompensation> {
         self.compensations.pop()
     }
+
+    pub fn clear(&mut self) {
+        self.compensations.clear();
+    }
 }

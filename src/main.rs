@@ -5,21 +5,33 @@ mod resources;
 mod systems;
 
 fn main() {
+    let levels = systems::load_levels();
+    let first_level = levels.first().cloned().unwrap_or_default();
+
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         // Resources needed by a system must exist before Bevy builds that system.
         // Startup systems can run in parallel, so inserting this from another
         // startup system is too late for `spawn_level_system`.
-        .insert_resource(systems::LevelHandle(systems::load_level()))
+        .insert_resource(systems::LevelHandle(first_level))
+        .insert_resource(resources::LevelProgress::new(levels))
         .init_resource::<resources::ActionHistory>()
-        .add_systems(Startup, (setup_camera, spawn_level_system))
+        .init_resource::<resources::PlayerSelection>()
+        .init_resource::<systems::PlayerOutlineTextures>()
+        .add_systems(Startup, (setup_camera, systems::spawn_level))
         .add_event::<systems::PlayerMoveEvent>()
+        .add_event::<systems::LevelWin>()
         .add_systems(
             Update,
             (
+                systems::switch_active_player_system,
                 systems::player_movement_system,
-                systems::interactive_object_box_system,
+                systems::character_movement_system,
                 systems::undo_system,
+                systems::check_level_win_system,
+                systems::advance_level_system,
+                systems::spawn_player_outline_system,
+                systems::active_player_outline_system,
             )
                 .chain(),
         )
@@ -27,9 +39,11 @@ fn main() {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2d);
-}
-
-fn spawn_level_system(commands: Commands, level_handle: Res<systems::LevelHandle>) {
-    systems::spawn_level(commands, level_handle);
+    commands.spawn((
+        Camera2d,
+        Projection::Orthographic(OrthographicProjection {
+            scale: 0.68,
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
 }

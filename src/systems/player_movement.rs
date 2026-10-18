@@ -1,13 +1,23 @@
 use bevy::prelude::*;
 
+use crate::resources::PlayerSelection;
+
 /// A single grid step requested by the player.
 #[derive(Event, Clone, Copy, Debug)]
-pub struct PlayerMoveEvent(pub IVec2);
+pub struct PlayerMoveEvent {
+    pub player: Entity,
+    pub direction: IVec2,
+}
 
 pub fn player_movement_system(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut move_events: EventWriter<PlayerMoveEvent>,
+    selection: Res<PlayerSelection>,
 ) {
+    if keyboard.just_pressed(KeyCode::KeyG) || selection.active_player.is_none() {
+        return;
+    }
+
     if keyboard.just_pressed(KeyCode::KeyZ) {
         return;
     }
@@ -27,6 +37,8 @@ pub fn player_movement_system(
     };
 
     if let Some(direction) = direction {
-        move_events.send(PlayerMoveEvent(direction));
+        if let Some(player) = selection.active_player {
+            move_events.send(PlayerMoveEvent { player, direction });
+        }
     }
 }
