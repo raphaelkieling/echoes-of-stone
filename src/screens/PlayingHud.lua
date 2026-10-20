@@ -83,29 +83,31 @@ function PlayingHud:drawPause(completed)
 	local scale = UI.scale(width, height)
 	love.graphics.setColor(0, 0, 0, 0.78)
 	love.graphics.rectangle("fill", 0, 0, width, height)
-	local panelWidth = math.min(width - 36 * scale, 620 * scale)
-	local panelHeight = 300 * scale
+	local options = scene:getPauseOptions(completed)
+	local panelWidth = math.min(width - 36 * scale, 360 * scale)
+	local rowHeight = 38 * scale
+	local headerHeight = completed and 36 * scale or 0
+	local panelHeight = 12 * scale + headerHeight + #options * rowHeight
 	local panelX, panelY = (width - panelWidth) / 2, (height - panelHeight) / 2
 	UI.drawPanel(panelX, panelY, panelWidth, panelHeight)
 
-	UI.setColor("accent")
-	UI.setFont(completed and 33 or 42, width, height)
-	love.graphics.printf(completed and "ALL LEVELS COMPLETE" or "PAUSED",
-		panelX + 20 * scale, panelY + 25 * scale, panelWidth - 40 * scale, "center")
-	UI.drawDivider(panelX + 28 * scale, panelY + 78 * scale, panelWidth - 56 * scale)
+	if completed then
+		UI.setColor("accent")
+		UI.setFont(24, width, height)
+		love.graphics.printf("ALL LEVELS COMPLETE", panelX + 12 * scale,
+			panelY + 5 * scale, panelWidth - 24 * scale, "center")
+	end
 
-	local options = scene:getPauseOptions(completed)
-	local rowHeight = 43 * scale
-	local firstRowY = panelY + 93 * scale
+	local firstRowY = panelY + 6 * scale + headerHeight
 	for index, label in ipairs(options) do
 		local y = firstRowY + (index - 1) * rowHeight
 		if index == scene.pauseSelection then
-			UI.drawSelection(panelX + 22 * scale, y - 3 * scale, panelWidth - 44 * scale, 38 * scale)
+			UI.drawSelection(panelX + 10 * scale, y, panelWidth - 20 * scale, 34 * scale)
 		end
 		UI.setColor(index == scene.pauseSelection and "accent" or "text")
-		UI.setFont(28, width, height)
+		UI.setFont(26, width, height)
 		love.graphics.print((index == scene.pauseSelection and "> " or "  ") .. label,
-			panelX + 48 * scale, y)
+			panelX + 20 * scale, y + 2 * scale)
 	end
 end
 

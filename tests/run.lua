@@ -2,6 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 
 local suites = {
     {name = "character_movement", tests = require("tests.character_movement")},
+    {name = "narrative_triggers", tests = require("tests.narrative_triggers")},
+    {name = "board_win_condition", tests = require("tests.board_win_condition")},
+    {name = "target_component", tests = require("tests.target_component")},
 }
 local passed, failed = 0, 0
 
@@ -23,7 +26,7 @@ for _, suite in ipairs(suites) do
     end
 end
 
-print(string.format("\n%d character tests passed, %d failed", passed, failed))
+print(string.format("\n%d tests passed, %d failed", passed, failed))
 if failed > 0 then
     os.exit(1)
 end

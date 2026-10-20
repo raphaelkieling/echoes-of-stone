@@ -43,6 +43,9 @@ function NarrativeTrigger:entered(change)
 end
 
 function NarrativeTrigger:onObjectMoved(change, events)
+	-- Triggers are activated by players only; pushed objects such as boxes
+	-- must not consume one-shot triggers or start a narrative.
+	if not change.object or not change.object:hasComponent("Player") then return false end
 	if self.fired or not self:entered(change) then return false end
 	if self.once then self.fired = true end
 

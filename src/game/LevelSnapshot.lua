@@ -77,6 +77,20 @@ local function captureTriggers(board)
 	return triggers
 end
 
+local function captureTargets(board)
+	local targets = {}
+	for _, target in ipairs(board.targets) do
+		local item = {x = target.x, y = target.y}
+		local component = target.object and target.object:getComponent("Target")
+		if component then
+			item.tileId = component.tileId
+			item.state = component.state
+		end
+		targets[#targets + 1] = item
+	end
+	return targets
+end
+
 local function captureHistory(scene, objectIndexes)
 	local actions = {}
 	for _, snapshots in ipairs(scene.history and scene.history.actions or {}) do
@@ -117,6 +131,7 @@ function LevelSnapshot.capture(scene)
 			tiledMap = board.tiledMap == true,
 			cells = sortedCells(board),
 			renderTiles = renderTiles,
+			targets = captureTargets(board),
 			objects = objects,
 			triggers = captureTriggers(board),
 			undoHistory = captureHistory(scene, objectIndexes),

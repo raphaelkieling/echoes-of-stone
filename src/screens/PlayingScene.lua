@@ -204,7 +204,7 @@ function PlayingScene:updatePlaying(dt)
 	if not self.states:is("playing") then return end
     self:updateHeldUndo(dt)
 	if self.states:is("playing") and self.board and not self.board:isMoving()
-		and self.board:allBoxesOnTargets() then
+		and self.board:allTargetsCovered() then
         self:completeLevel()
     end
 end
@@ -408,8 +408,8 @@ end
 
 function PlayingScene:getPauseOptions(completed)
     if completed == nil then completed = self.states:is("completed") end
-    if completed then return {"Replay level", "Level select", "Quit"} end
-    return {"Resume", "Restart level", "Level select", "Quit"}
+    if completed then return {"Replay level", "Level select", "Main menu", "Quit"} end
+    return {"Resume", "Restart level", "Level select", "Main menu", "Quit"}
 end
 
 function PlayingScene:choosePauseOption(completed)
@@ -419,6 +419,8 @@ function PlayingScene:choosePauseOption(completed)
             self.states:change("entering")
         elseif self.pauseSelection == 2 then
             self.game.scenes:switch("levels")
+        elseif self.pauseSelection == 3 then
+            self.game.scenes:switch("menu")
         else
             love.event.quit()
         end
@@ -431,6 +433,8 @@ function PlayingScene:choosePauseOption(completed)
         self.states:change("entering")
     elseif self.pauseSelection == 3 then
         self.game.scenes:switch("levels")
+    elseif self.pauseSelection == 4 then
+        self.game.scenes:switch("menu")
     else
         love.event.quit()
     end

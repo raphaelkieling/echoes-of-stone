@@ -363,13 +363,11 @@ local function loadTiled(path, assets, events)
             board:spawnBox(marker.x, marker.y, marker.tileId)
         else
             cell.target = true
-            board.targets[#board.targets + 1] = {x = marker.x, y = marker.y}
-            if marker.tileId then
-                board:addMapTile(marker.x, marker.y, marker.tileId)
-            end
+            board:addTarget(marker.x, marker.y, marker.tileId)
         end
     end
 
+    board:refreshTargetStates()
     return board
 end
 
@@ -399,12 +397,12 @@ function LevelLoader.load(path, assets, events)
             elseif marker == "#" or marker == "*" then
                 board:setCell(x, y, {walkable = true, target = marker == "*"})
                 if marker == "*" then
-                    board.targets[#board.targets + 1] = {x = x, y = y}
+                    board:addTarget(x, y)
                 end
                 board:spawnBox(x, y)
             elseif marker == "F" then
                 board:setCell(x, y, {walkable = true, target = true})
-                board.targets[#board.targets + 1] = {x = x, y = y}
+                board:addTarget(x, y)
             elseif PLAYER_MARKERS[marker] then
                 board:setCell(x, y, {walkable = true})
                 board:spawnPlayer(PLAYER_MARKERS[marker], x, y)
@@ -414,6 +412,7 @@ function LevelLoader.load(path, assets, events)
         end
     end
 
+    board:refreshTargetStates()
     return board
 end
 

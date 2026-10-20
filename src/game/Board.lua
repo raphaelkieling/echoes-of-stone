@@ -5,6 +5,7 @@ local Animation = require("src.components.Animation")
 local InteractiveObject = require("src.components.InteractiveObject")
 local Player = require("src.components.Player")
 local Box = require("src.components.Box")
+local Target = require("src.components.Target")
 local Shake = require("src.components.Shake")
 local CharacterFactory = require("src.characters.CharacterFactory")
 
@@ -23,6 +24,7 @@ function Board:init(assets, width, height)
     self.players = {}
     self.boxes = {}
     self.targets = {}
+    self.targetObjects = {}
     self.triggers = {}
     self.renderTiles = {}
     self.debugShowSolid = false
@@ -46,6 +48,23 @@ function Board:addMapTile(x, y, tileId)
         tileId = tileId,
         quad = self.assets:tileQuad(tileId),
     }
+end
+
+function Board:addTarget(x, y, tileId)
+    local object = GameObject("Target")
+    object:addComponent(Transform(x, y, 64, 1))
+    object:addComponent(Target(self, self.assets, tileId))
+    object:addComponent(self.assets:tileRenderer(2, 1))
+    self.targets[#self.targets + 1] = {x = x, y = y, object = object}
+    self.targetObjects[#self.targetObjects + 1] = object
+    self:addChild(object)
+    return object
+end
+
+function Board:refreshTargetStates()
+    for _, object in ipairs(self.targetObjects) do
+        object:getComponent("Target"):refreshState()
+    end
 end
 
 function Board:getCell(x, y)
@@ -144,6 +163,16 @@ function Board:isMoving()
     return false
 end
 
+function Board:isBoxAt(x, y)
+    for _, box in ipairs(self.boxes) do
+        local transform = box:getComponent("Transform")
+        if transform.gridX == x and transform.gridY == y then
+            return true
+        end
+    end
+    return false
+end
+
 function Board:update(dt)
     self:updateChildren(dt)
 end
@@ -161,7 +190,6 @@ function Board:draw(activePlayer)
     else
         local floorQuad = self.assets.tileGrid(1, 1)[1]
         local wallQuad = self.assets.tileGrid(2, 1)[1]
-        local targetQuad = self.assets.tileGrid(10, 17)[1]
         for y = 0, self.height - 1 do
             for x = 0, self.width - 1 do
                 local cell = self:getCell(x, y)
@@ -169,9 +197,6 @@ function Board:draw(activePlayer)
                     local screenX, screenY = (x + 0.5) * 64, (y + 0.5) * 64
                     if cell.walkable then
                         love.graphics.draw(self.assets.tiles, floorQuad, screenX, screenY, 0, 2, 2, 16, 16)
-                        if cell.target then
-                            love.graphics.draw(self.assets.tiles, targetQuad, screenX, screenY, 0, 2, 2, 16, 16)
-                        end
                     elseif cell.wall then
                         love.graphics.draw(self.assets.tiles, wallQuad, screenX, screenY, 0, 2, 2, 16, 16)
                     end
@@ -204,6 +229,9 @@ function Board:draw(activePlayer)
 
     local drawOrder = {}
     for _, object in ipairs(self.objects) do
+        drawOrder[#drawOrder + 1] = object
+    end
+    for _, object in ipairs(self.targetObjects) do
         drawOrder[#drawOrder + 1] = object
     end
     table.sort(drawOrder, function(a, b)
@@ -275,17 +303,17 @@ function Board:drawNarrativeTriggers(camera)
 	love.graphics.pop()
 end
 
-function Board:allBoxesOnTargets()
-    if #self.boxes == 0 then
-        return false
-    end
-    local targetPositions = {}
-    for _, target in ipairs(self.targets) do
-        targetPositions[self:cellKey(target.x, target.y)] = true
-    end
+function Board:allTargetsCovered()
+    if #self.targets == 0 then return false end
+
+    local occupiedPositions = {}
     for _, box in ipairs(self.boxes) do
         local transform = box:getComponent("Transform")
-        if not targetPositions[self:cellKey(transform.gridX, transform.gridY)] then
+        occupiedPositions[self:cellKey(transform.gridX, transform.gridY)] = true
+    end
+
+    for _, target in ipairs(self.targets) do
+        if not occupiedPositions[self:cellKey(target.x, target.y)] then
             return false
         end
     end
