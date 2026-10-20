@@ -1,4 +1,5 @@
 local json = require("vendor.json")
+local GameConfig = require("src.settings.GameConfig")
 
 local JsonLogger = {}
 JsonLogger.__index = JsonLogger
@@ -20,7 +21,7 @@ function JsonLogger.new(events)
 		lastError = nil,
 		data = {
 			formatVersion = 1,
-			game = "Echoes of Stone",
+			game = GameConfig.title,
 			loveVersion = string.format("%d.%d.%d", major, minor, revision),
 			startedAt = os.date("!%Y-%m-%dT%H:%M:%SZ"),
 			events = {},

@@ -1,6 +1,7 @@
 local Keymap = require("src.settings.Keymap")
 local Scene = require("src.core.Scene")
 local UI = require("src.ui.Theme")
+local GameConfig = require("src.settings.GameConfig")
 
 local About = Scene:extend()
 
@@ -23,7 +24,8 @@ function About:draw()
     love.graphics.printf("ABOUT", panelX, panelY + 25 * scale, panelWidth, "center")
     UI.setColor("muted")
     UI.setFont(18, width, height)
-    love.graphics.printf("ECHOES OF STONE  //  CREDITS", panelX, panelY + 88 * scale, panelWidth, "center")
+    love.graphics.printf(GameConfig.title:upper() .. "  //  CREDITS",
+        panelX, panelY + 88 * scale, panelWidth, "center")
     UI.drawDivider(panelX + 30 * scale, panelY + 120 * scale, panelWidth - 60 * scale)
 
     UI.setColor("accent")

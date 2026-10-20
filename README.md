@@ -1,4 +1,4 @@
-# Echoes of Stone
+# Sokoban v2
 
 A fantasy Sokoban puzzle where heroes use unique abilities to move blocks and reach each level's goals.
 

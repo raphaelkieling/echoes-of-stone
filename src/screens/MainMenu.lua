@@ -1,6 +1,7 @@
 local Scene = require("src.core.Scene")
 local Keymap = require("src.settings.Keymap")
 local UI = require("src.ui.Theme")
+local GameConfig = require("src.settings.GameConfig")
 
 local MainMenu = Scene:extend()
 
@@ -15,7 +16,7 @@ function MainMenu:draw()
     local scale = UI.scale(width, height)
     UI.setColor("text")
     UI.setFont(88, width, height)
-    love.graphics.printf("ECHOES OF STONE", 0, height * 0.18, width, "center")
+    love.graphics.printf(GameConfig.title:upper(), 0, height * 0.18, width, "center")
 
     local panelX, panelY = 44 * scale, height - 230 * scale
     local panelWidth, panelHeight = 360 * scale, 150 * scale

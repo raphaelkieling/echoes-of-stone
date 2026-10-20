@@ -1,4 +1,5 @@
 local LevelSnapshot = {}
+local GameConfig = require("src.settings.GameConfig")
 
 local function sortedCells(board)
 	local cells = {}
@@ -117,7 +118,7 @@ function LevelSnapshot.capture(scene)
 	end
 
 	return {
-		format = "echoes-of-stone-level-state",
+		format = GameConfig.snapshotFormat,
 		formatVersion = 1,
 		level = {
 			path = scene.levelPath,

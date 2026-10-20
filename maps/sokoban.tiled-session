@@ -130,11 +130,11 @@
             "scaleInDock": 1
         },
         "level5.tmj": {
-            "scale": 1.0529,
+            "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 319.5935036565676,
-                "y": 319.5935036565676
+                "x": 251.25,
+                "y": 187.25
             }
         },
         "level5.tmj#rogues": {

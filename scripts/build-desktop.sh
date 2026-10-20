@@ -5,7 +5,14 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_ROOT="$ROOT_DIR/dist/desktop"
 CACHE_DIR="$ROOT_DIR/dist/.love-runtime-cache"
 STAGING_DIR="$(mktemp -d)"
-GAME_NAME="Echoes of Stone"
+GAME_CONFIG="$ROOT_DIR/src/settings/GameConfig.lua"
+GAME_NAME="$(sed -n 's/^[[:space:]]*title = "\([^"]*\)".*/\1/p' "$GAME_CONFIG")"
+if [[ -z "$GAME_NAME" ]]; then
+	echo "Could not read the game title from $GAME_CONFIG" >&2
+	exit 1
+fi
+GAME_SLUG="$(printf '%s' "$GAME_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//')"
+GAME_BUNDLE_ID="com.${GAME_SLUG//-/.}"
 LOVE_VERSION="11.5"
 GAME_DIR="$STAGING_DIR/game"
 GAME_LOVE="$STAGING_DIR/$GAME_NAME.love"
@@ -60,8 +67,8 @@ build_windows() {
 	rm -rf "$output_dir"
 	mkdir -p "$output_dir"
 	cp -R "$package_dir"/. "$output_dir/"
-	(cd "$output_dir" && zip -9 -qr "$BUILD_ROOT/echoes-of-stone-windows-x64.zip" .)
-	echo "Windows x64 build: $BUILD_ROOT/echoes-of-stone-windows-x64.zip"
+	(cd "$output_dir" && zip -9 -qr "$BUILD_ROOT/$GAME_SLUG-windows-x64.zip" .)
+	echo "Windows x64 build: $BUILD_ROOT/$GAME_SLUG-windows-x64.zip"
 }
 
 build_macos() {
@@ -85,13 +92,13 @@ build_macos() {
 	ditto "$love_app" "$app_path"
 	cp "$GAME_LOVE" "$app_path/Contents/Resources/$GAME_NAME.love"
 	local plist="$app_path/Contents/Info.plist"
-	/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.echoesofstone.game' "$plist"
-	/usr/libexec/PlistBuddy -c 'Set :CFBundleName Echoes of Stone' "$plist"
+	/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $GAME_BUNDLE_ID" "$plist"
+	/usr/libexec/PlistBuddy -c "Set :CFBundleName $GAME_NAME" "$plist"
 	/usr/libexec/PlistBuddy -c 'Delete :UTExportedTypeDeclarations' "$plist" >/dev/null 2>&1 || true
 	ditto -c -k --sequesterRsrc --keepParent "$app_path" \
-		"$BUILD_ROOT/echoes-of-stone-macos.zip"
+		"$BUILD_ROOT/$GAME_SLUG-macos.zip"
 	echo "macOS app: $app_path"
-	echo "macOS ZIP: $BUILD_ROOT/echoes-of-stone-macos.zip"
+	echo "macOS ZIP: $BUILD_ROOT/$GAME_SLUG-macos.zip"
 }
 
 if [[ "$TARGET" == "all" || "$TARGET" == "windows" ]]; then build_windows; fi

@@ -11,12 +11,14 @@ local MobileControls = require("src.input.MobileControls")
 local AudioManager = require("src.audio.AudioManager")
 local EventEmitter = require("src.core.EventEmitter")
 local JsonLogger = require("src.core.JsonLogger")
+local GameConfig = require("src.settings.GameConfig")
 
 local Game = {}
 Game.__index = Game
 
 function Game.new()
     local self = setmetatable({}, Game)
+    love.window.setTitle(GameConfig.title)
     self.events = EventEmitter.new()
     self.logger = JsonLogger.new(self.events)
     self.events:emit("game.opened", {})
