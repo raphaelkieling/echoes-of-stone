@@ -12,7 +12,7 @@ function MovementState:onMovement(data)
 
     local characterClass = self.owner:getComponent("CharacterClass")
     if characterClass then
-        characterClass.behavior:playMovementEffect(
+        characterClass:playMovementEffect(
             data.effects,
             self.owner,
             data.changes,

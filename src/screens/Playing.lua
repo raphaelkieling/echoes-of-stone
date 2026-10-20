@@ -1,12 +1,10 @@
 local cameraLib = require("vendor.hump.camera")
-local CharacterMovement = require("src.game.CharacterMovement")
 local ActionHistory = require("src.game.ActionHistory")
 local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
 local BuildConfig = require("src.settings.BuildConfig")
 local UI = require("src.ui.Theme")
 local UndoHistoryOverlay = require("src.dev.UndoHistoryOverlay")
-local MovementEffects = require("src.game.MovementEffects")
 
 local Playing = {}
 Playing.__index = Playing
@@ -42,7 +40,6 @@ function Playing.new(game)
         mobileControls = game.mobileControls,
         camera = cameraLib(0, 0, 1),
         history = ActionHistory(),
-        movementEffects = MovementEffects.new(),
         levelIndex = 1,
         transition = nil,
         heldMoveKey = nil,
@@ -75,7 +72,6 @@ function Playing:loadLevel()
 		players = #self.board.players,
 	})
     self.history:clear()
-    self.movementEffects:clear()
     self.activeIndex = 1
     self:snapCameraToTarget()
 end
@@ -134,7 +130,6 @@ function Playing:update(dt)
         if self.transition.elapsed >= self.transition.duration then self.transition = nil end
     end
     if self.board then self.board:update(dt) end
-	self.movementEffects:update(dt)
 	self:updateBufferedMovement()
     self:updateHeldMovement(dt)
     if self.board then
@@ -152,10 +147,10 @@ end
 function Playing:movePlayer(direction)
 	local player = self:currentPlayer()
 	if not player then return false end
-	local class = player:getComponent("CharacterClass").behavior
+	local class = player:getComponent("CharacterClass")
 	local previousBoxesOnTargets = boxesOnTargets(self.board)
-	local moved = CharacterMovement.move(self.board, player, direction,
-		self.history, self.movementEffects)
+	local moved = player:getComponent("CharacterMovement"):move(
+		self.board, direction, self.history)
 	self.game.events:emit("player.moved", {
 		level = self.levelPath,
 		playerIndex = self.activeIndex,
@@ -251,7 +246,6 @@ function Playing:draw()
     if not self.board then return end
     self.camera:attach()
     self.board:draw(self:currentPlayer())
-	self.movementEffects:draw()
     local undoPaths
     if self.board.debugShowUndoHistory then
         undoPaths = UndoHistoryOverlay.drawWorld(self.board, self.history.actions)

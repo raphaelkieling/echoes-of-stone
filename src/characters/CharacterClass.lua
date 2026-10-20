@@ -1,6 +1,7 @@
-local Class = require("src.core.Class")
+local Component = require("src.core.Component")
 
-local CharacterClass = Class:extend()
+local CharacterClass = Component:extend()
+CharacterClass.componentName = "CharacterClass"
 
 CharacterClass.id = "character"
 CharacterClass.name = "Character"
@@ -18,6 +19,14 @@ function CharacterClass:playMovementEffect(effects, actor, changes)
             return
         end
     end
+end
+
+function CharacterClass:init()
+	Component.init(self)
+end
+
+function CharacterClass:getId()
+	return self.id
 end
 
 return CharacterClass

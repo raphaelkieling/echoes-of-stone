@@ -93,7 +93,7 @@ function UndoHistoryOverlay.drawLegend(paths)
 	for _, path in ipairs(paths) do
 		local color = path.color
 		local characterClass = path.player:getComponent("CharacterClass")
-		local name = characterClass and characterClass.behavior.name or ("Player " .. path.playerIndex)
+		local name = characterClass and characterClass.name or ("Player " .. path.playerIndex)
 		love.graphics.setColor(0, 0, 0, 0.78)
 		love.graphics.rectangle("fill", x - 6, y - 3, 230, 26)
 		love.graphics.setColor(color[1], color[2], color[3], 1)

@@ -1,5 +1,6 @@
-local MovementEffects = {}
-MovementEffects.__index = MovementEffects
+local Component = require("src.core.Component")
+local MovementEffects = Component:extend()
+MovementEffects.componentName = "MovementEffects"
 
 local SILHOUETTE_SHADER = [[
 vec4 effect(vec4 color, Image texture, vec2 textureCoordinates, vec2 screenCoordinates) {
@@ -12,11 +13,10 @@ local function center(gridX, gridY, cellSize)
 	return (gridX + 0.5) * cellSize, (gridY + 0.5) * cellSize
 end
 
-function MovementEffects.new()
-	return setmetatable({
-		effects = {},
-		silhouetteShader = love.graphics.newShader(SILHOUETTE_SHADER),
-	}, MovementEffects)
+function MovementEffects:init()
+	Component.init(self)
+	self.effects = {}
+	self.silhouetteShader = love.graphics.newShader(SILHOUETTE_SHADER)
 end
 
 function MovementEffects:add(kind, data, duration)
@@ -86,7 +86,6 @@ local function drawDust(_manager, effect, progress)
 			effect.y + offset[2] * spread + progress * 8, 3 + progress * 3)
 	end
 end
-
 
 local DRAWERS = {
 	["wizard-trail"] = drawWizardTrail,

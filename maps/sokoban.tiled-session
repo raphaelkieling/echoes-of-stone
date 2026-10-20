@@ -1,6 +1,7 @@
 {
-    "activeFile": "",
+    "activeFile": "level6.tmj",
     "expandedProjectPaths": [
+        "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -11,8 +12,8 @@
             "scale": 1.3522656249999998,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 109.44595297244211,
-                "y": 258.45513894505757
+                "x": 158.99243168293955,
+                "y": 232.57265006643945
             }
         },
         "level0.tmj#rogues": {
@@ -114,8 +115,8 @@
             "scale": 0.60265625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 320.24889810733725,
-                "y": 319.4192377495463
+                "x": 646.305418719212,
+                "y": 457.97251750064817
             }
         },
         "level6.tmj#rogues": {
@@ -139,15 +140,32 @@
             "scaleInDock": 2
         },
         "level_playground.tmj#tiles": {
-            "scaleInDock": 1
+            "scaleInDock": 1,
+            "scaleInEditor": 1
         }
     },
     "last.imagePath": "/Users/raphaelkieling/Dev/personal/sokoban/assets",
     "openFiles": [
+        "level0.tmj",
+        "level1.tmj",
+        "level2.tmj",
+        "level3.tmj",
+        "level_playground.tmj",
+        "level4.tmj",
+        "level5.tmj",
+        "level6.tmj"
     ],
     "project": "sokoban.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "level0.tmj",
+        "level1.tmj",
+        "level2.tmj",
+        "level3.tmj",
+        "level_playground.tmj",
+        "level4.tmj",
+        "level5.tmj",
+        "level6.tmj",
         "level0.tmx.tmj",
         "level1.tmx.tmj"
     ],

@@ -10,7 +10,7 @@ end
 
 function GameObject:addComponent(component)
     assert(component.componentName, "components must declare componentName")
-    assert(not self.components[component.componentName], "duplicate component: " .. component.componentName)
+    assert(not self:getComponent(component.componentName), "duplicate component: " .. component.componentName)
 
     component.owner = self
     self.components[component.componentName] = component
@@ -20,11 +20,19 @@ function GameObject:addComponent(component)
 end
 
 function GameObject:getComponent(componentName)
-    return self.components[componentName]
+	local component = self.components[componentName]
+	if component then return component end
+	for _, child in ipairs(self.componentOrder) do
+		if child.getNestedComponent then
+			component = child:getNestedComponent(componentName)
+			if component then return component end
+		end
+	end
+	return nil
 end
 
 function GameObject:hasComponent(componentName)
-    return self.components[componentName] ~= nil
+	return self:getComponent(componentName) ~= nil
 end
 
 function GameObject:update(dt)

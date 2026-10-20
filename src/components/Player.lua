@@ -12,17 +12,24 @@ function Player:setClass(classObject, assets)
     if type(classObject) == "string" then
         classObject = Player.Classes.create(classObject)
     end
-    local CharacterClass = require("src.components.CharacterClass")
     local existing = self:getClass()
+    local character = self.owner:getComponent("Character")
     if existing then
-        existing:set(classObject)
+        if character then
+            character:replaceComponent("CharacterClass", classObject)
+        else
+            error("class replacement requires a Character component")
+        end
         self:updateAppearance(classObject, assets)
-        return existing
+        return classObject
     end
-    local component = CharacterClass(classObject)
-    self.owner:addComponent(component)
+    if character then
+        character:addComponent(classObject)
+    else
+        self.owner:addComponent(classObject)
+    end
     self:updateAppearance(classObject, assets)
-    return component
+    return classObject
 end
 
 function Player:getClass()

@@ -1,14 +1,16 @@
 local Board = require("src.game.Board")
 local GameObject = require("src.core.GameObject")
+local Character = require("src.components.Character")
+local Component = require("src.core.Component")
 local Transform = require("src.components.Transform")
 local InteractiveObject = require("src.components.InteractiveObject")
 local Player = require("src.components.Player")
+local CharacterMovement = require("src.components.CharacterMovement")
 local StateMachine = require("src.components.StateMachine")
 local CharacterClasses = require("src.characters.Classes")
 local PlayerStates = require("src.characters.PlayerStates")
 local Box = require("src.components.Box")
 local Shake = require("src.components.Shake")
-local CharacterMovement = require("src.game.CharacterMovement")
 local ActionHistory = require("src.game.ActionHistory")
 
 local tests = {}
@@ -35,10 +37,13 @@ local function spawnPlayer(board, x, y, classId)
     local player = GameObject("test-player")
     player:addComponent(Transform(x, y, 64, 3))
     player:addComponent(InteractiveObject())
+    local character = Character()
+    player:addComponent(character)
     local playerComponent = Player()
-    player:addComponent(playerComponent)
+    character:addComponent(playerComponent)
     playerComponent:setClass(CharacterClasses.create(classId))
-    player:addComponent(StateMachine(PlayerStates, "idle"))
+    character:addComponent(CharacterMovement())
+    character:addComponent(StateMachine(PlayerStates, "idle"))
     board:addObject(player)
     return player
 end
@@ -64,7 +69,7 @@ local function assertPosition(object, x, y)
 end
 
 local function run(board, player, direction)
-    return CharacterMovement.move(board, player, direction, ActionHistory())
+    return player:getComponent("CharacterMovement"):move(board, direction, ActionHistory())
 end
 
 function tests.dwarf_walks_one_tile()
@@ -133,13 +138,13 @@ function tests.movement_effect_is_dispatched_by_the_actors_walking_state()
     local stateMachine = player:getComponent("Player"):getStateMachine()
     local effects = {}
     local effectState
-    local behavior = player:getComponent("CharacterClass").behavior
+    local behavior = player:getComponent("CharacterClass")
     behavior.playMovementEffect = function(_self, receivedEffects)
         effectState = stateMachine.currentName
         assert(receivedEffects == effects)
     end
 
-    assert(CharacterMovement.move(board, player, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(player:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, ActionHistory(), effects))
     assert(effectState == "walking")
 end
 
@@ -152,7 +157,7 @@ function tests.wizard_uses_dust_for_a_normal_walk()
         characterTrail = function() played[#played + 1] = "wizard-trail" end,
     }
 
-    assert(CharacterMovement.move(board, wizard, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(wizard:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, ActionHistory(), effects))
     assert(#played == 1 and played[1] == "dust")
 end
 
@@ -166,7 +171,7 @@ function tests.wizard_uses_only_its_trail_when_swapping_with_an_object()
         characterTrail = function() played[#played + 1] = "wizard-trail" end,
     }
 
-    assert(CharacterMovement.move(board, wizard, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(wizard:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, ActionHistory(), effects))
     assert(#played == 1 and played[1] == "wizard-trail")
 end
 
@@ -176,12 +181,12 @@ function tests.movement_effect_does_not_run_for_a_player_pushed_as_an_object()
     local wizard = spawnPlayer(board, 2, 0, Player.Classes.WIZARD)
     local effects = {}
     local pushedPlayerEffectPlayed = false
-    dwarf:getComponent("CharacterClass").behavior.playMovementEffect = function() end
-    wizard:getComponent("CharacterClass").behavior.playMovementEffect = function()
+    dwarf:getComponent("CharacterClass").playMovementEffect = function() end
+    wizard:getComponent("CharacterClass").playMovementEffect = function()
         pushedPlayerEffectPlayed = true
     end
 
-    assert(CharacterMovement.move(board, dwarf, {x = 1, y = 0}, ActionHistory(), effects))
+    assert(dwarf:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, ActionHistory(), effects))
     assert(not pushedPlayerEffectPlayed)
 end
 
@@ -191,7 +196,7 @@ function tests.undo_uses_walking_state_until_the_tween_finishes()
     local history = ActionHistory()
     local stateMachine = player:getComponent("Player"):getStateMachine()
 
-    assert(CharacterMovement.move(board, player, {x = 1, y = 0}, history))
+    assert(player:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, history))
     assert(history:undo())
     assert(stateMachine.currentName == "walking")
     player:update(0.2)
@@ -239,6 +244,23 @@ function tests.player_can_change_class_and_use_the_new_ability()
     assert(run(board, player, {x = 1, y = 0}))
     assertPosition(player, 4, 0)
     assertPosition(box, 1, 0)
+end
+
+function tests.character_accepts_an_independent_component()
+    local board = makeBoard(0, 4, 0)
+    local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+    local ExtraCharacterFeature = Component:extend()
+    ExtraCharacterFeature.componentName = "TestCharacterFeature"
+    function ExtraCharacterFeature:init()
+        Component.init(self)
+    end
+
+    player:getComponent("Character"):addComponent(ExtraCharacterFeature())
+    local feature = player:getComponent("TestCharacterFeature")
+    assert(feature and feature.owner == player,
+        "nested character components should be discoverable and attached to the object")
+    assert(player:getComponent("CharacterClass").id == Player.Classes.DWARF,
+        "adding an independent component should not alter the character class")
 end
 
 function tests.wizard_walks_when_ray_is_clear()

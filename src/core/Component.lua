@@ -8,6 +8,7 @@ function Component:init()
 end
 
 function Component:onAttach(_owner) end
+function Component:onDetach(_owner) end
 function Component:update(_dt) end
 function Component:draw(_context) end
 

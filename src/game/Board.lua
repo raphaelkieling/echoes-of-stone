@@ -2,14 +2,11 @@ local Class = require("src.core.Class")
 local GameObject = require("src.core.GameObject")
 local Transform = require("src.components.Transform")
 local Animation = require("src.components.Animation")
-local SpriteRenderer = require("src.components.SpriteRenderer")
 local InteractiveObject = require("src.components.InteractiveObject")
-local StateMachine = require("src.components.StateMachine")
 local Player = require("src.components.Player")
 local Box = require("src.components.Box")
 local Shake = require("src.components.Shake")
-local CharacterClasses = require("src.characters.Classes")
-local PlayerStates = require("src.characters.PlayerStates")
+local CharacterFactory = require("src.characters.CharacterFactory")
 
 local Board = Class:extend()
 
@@ -83,18 +80,7 @@ function Board:addObject(object)
 end
 
 function Board:spawnPlayer(classId, x, y)
-    local characterClass = CharacterClasses.create(classId)
-    local sprite = characterClass.sprite
-    local object = GameObject("Player " .. characterClass.name)
-    object:addComponent(Transform(x, y, 64, 3))
-    object:addComponent(InteractiveObject())
-    local player = Player()
-    object:addComponent(player)
-    player:setClass(characterClass)
-    object:addComponent(StateMachine(PlayerStates, "idle"))
-    object:addComponent(Animation(self.assets:playerAnimation(sprite.x, sprite.y)))
-    object:addComponent(self.assets:playerRenderer(sprite.scale, 3))
-    return self:addObject(object)
+    return self:addObject(CharacterFactory.create(classId, x, y, self.assets))
 end
 
 function Board:spawnBox(x, y, tileId)
@@ -171,7 +157,7 @@ function Board:draw(activePlayer)
 
     if activePlayer then
         local characterClass = activePlayer:getComponent("CharacterClass")
-        if characterClass and characterClass.behavior.id == Player.Classes.MYSTERIOUS_PRIEST then
+        if characterClass and characterClass.id == Player.Classes.MYSTERIOUS_PRIEST then
             local transform = activePlayer:getComponent("Transform")
             local pulse = (math.sin(love.timer.getTime() * 3.2) + 1) / 2
             local auraSize = transform.cellSize * 3 * (0.96 + pulse * 0.04)

@@ -20,12 +20,34 @@ With `lua` installed:
 lua tests/run.lua
 ```
 
-## Architecture
+## Components
 
-- Character abilities live in `src/characters/classes/`; each class implements its own `move` method.
-- `src/game/MovementSession.lua` provides shared grid and collision helpers. `CharacterMovement.lua` commits moves and records undo.
-- Player states live in `src/characters/states/` and are registered in `PlayerStates.lua`. `Walking` and `Pushing` share `MovementState`, which handles movement presentation effects; idle-only presentation, such as the subtle sway, belongs in `Idle.lua`.
-- To add a character class, create its class file and register it in `src/characters/Classes.lua`.
-- Generated move, blocked-move, undo, target, and UI sounds are configured in `src/audio/SoundCatalog.lua`; set a sound's `file` path there to replace its synthesized version without changing gameplay code.
-- A local JSON event log is saved under `logs/` in LÖVE's save directory. It records app/screens/levels, console command names, and player movement outcomes for debugging; nothing is uploaded. The logger listens to the game's event emitter, so gameplay code emits events without depending on the logger.
-- In development, run `copy-logger-path` in the console to copy the current log file's shell-quoted path (ready to paste after `cat `).
+Game objects are compositions of components. A character keeps its character-only pieces together under the `Character` component:
+
+```text
+GameObject
+├── Transform
+├── InteractiveObject
+└── Character
+    ├── Player
+    ├── CharacterClass (Dwarf, Wizard, ...)
+    ├── CharacterMovement
+    ├── StateMachine (Idle, Walking, Pushing)
+    ├── Animation
+    ├── SpriteRenderer
+    └── MovementEffects
+```
+
+`CharacterFactory` assembles this composition; `CharacterMovement` handles shared move orchestration, while each class component implements its own ability. The nested components remain available through `gameObject:getComponent(name)`. To extend a character, add a component to its `Character` container rather than adding class-specific conditionals to movement code. Character classes are registered in `src/characters/Classes.lua`.
+
+## Desktop builds
+
+On macOS, with `curl`, `zip`, and `ditto` available:
+
+```sh
+./scripts/build-desktop.sh
+```
+
+This creates a Windows x64 folder/ZIP and a macOS `.app`/ZIP under `dist/desktop/`. To create only one platform, pass `windows` or `macos`. The script packages the game with the official LÖVE 11.5 runtimes and disables the development console in release builds.
+
+The macOS app is not signed or notarized; a public release may need an Apple Developer ID signature and notarization to avoid Gatekeeper warnings.
