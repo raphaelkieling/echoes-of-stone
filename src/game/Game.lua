@@ -31,6 +31,7 @@ function Game.new()
         local ConsoleCommands = require("src.dev.ConsoleCommands")
         self.console = Console.new(self.events)
         ConsoleCommands.register(self.console)
+        self.console:applyToggles({game = self})
     end
     self.scenes:register("menu", function(game) return MainMenu(game) end)
     self.scenes:register("levels", function(game) return LevelSelect(game) end)

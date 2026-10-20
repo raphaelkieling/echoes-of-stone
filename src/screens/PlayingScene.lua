@@ -92,6 +92,9 @@ function PlayingScene:loadLevel()
     self.board = LevelLoader.load(level.path, self.game.assets, self.game.events)
     self.board.drawSpace = "world"
     self:addChild(self.board)
+    if self.game.console then
+        self.game.console:applyToggles({game = self.game, scene = self, board = self.board})
+    end
     self.game.events:emit("level.started", {
 		level = level.name,
 		path = level.path,

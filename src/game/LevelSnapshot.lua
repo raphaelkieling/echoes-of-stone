@@ -1,0 +1,127 @@
+local LevelSnapshot = {}
+
+local function sortedCells(board)
+	local cells = {}
+	for key, cell in pairs(board.cells) do
+		local x, y = key:match("^(-?%d+):(-?%d+)$")
+		cells[#cells + 1] = {
+			x = tonumber(x),
+			y = tonumber(y),
+			walkable = cell.walkable == true,
+			wall = cell.wall == true,
+			target = cell.target == true,
+		}
+	end
+	table.sort(cells, function(a, b)
+		if a.y == b.y then return a.x < b.x end
+		return a.y < b.y
+	end)
+	return cells
+end
+
+local function captureObjects(scene, board)
+	local objects, indexes = {}, {}
+	local activePlayer = scene.currentPlayer and scene:currentPlayer()
+
+	for index, object in ipairs(board.objects) do
+		indexes[object] = index
+		local transform = object:getComponent("Transform")
+		local characterClass = object:getComponent("CharacterClass")
+		local player = object:getComponent("Player")
+		local stateMachine = player and player:getStateMachine()
+		local entry = {
+			index = index,
+			name = object.name,
+			kind = player and "player" or (object:hasComponent("Box") and "box" or "object"),
+			interactive = object:hasComponent("InteractiveObject"),
+			grid = {x = transform.gridX, y = transform.gridY},
+			world = {x = transform.x, y = transform.y},
+			moving = transform:isMoving(),
+			selected = object == activePlayer,
+		}
+		if characterClass then
+			entry.characterClass = characterClass.id
+			entry.characterClassName = characterClass.name
+		end
+		if stateMachine then entry.characterState = stateMachine.currentName end
+		if transform.tween then
+			entry.tween = {
+				elapsed = transform.tween.elapsed,
+				duration = transform.tween.duration,
+			}
+		end
+		objects[#objects + 1] = entry
+	end
+
+	return objects, indexes
+end
+
+local function captureTriggers(board)
+	local triggers = {}
+	for index, entry in ipairs(board.triggers) do
+		local trigger = entry.component
+		local item = {
+			index = index,
+			type = entry.object:hasComponent("PointTrigger") and "point" or "area",
+			narrativeId = trigger.narrativeId,
+			once = trigger.once,
+			fired = trigger.fired,
+		}
+		if trigger.width and trigger.height then
+			item.bounds = {x = trigger.x, y = trigger.y, width = trigger.width, height = trigger.height}
+		else
+			item.cell = {x = trigger.x, y = trigger.y}
+		end
+		triggers[#triggers + 1] = item
+	end
+	return triggers
+end
+
+local function captureHistory(scene, objectIndexes)
+	local actions = {}
+	for _, snapshots in ipairs(scene.history and scene.history.actions or {}) do
+		local action = {}
+		for _, snapshot in ipairs(snapshots) do
+			action[#action + 1] = {
+				object = objectIndexes[snapshot.object],
+				x = snapshot.gridX,
+				y = snapshot.gridY,
+			}
+		end
+		actions[#actions + 1] = action
+	end
+	return actions
+end
+
+function LevelSnapshot.capture(scene)
+	assert(scene and scene.board, "cannot capture a level without an active board")
+	local board = scene.board
+	local objects, objectIndexes = captureObjects(scene, board)
+	local renderTiles = {}
+	for _, tile in ipairs(board.renderTiles) do
+		renderTiles[#renderTiles + 1] = {x = tile.x, y = tile.y, tileId = tile.tileId}
+	end
+
+	return {
+		format = "echoes-of-stone-level-state",
+		formatVersion = 1,
+		level = {
+			path = scene.levelPath,
+			index = scene.levelIndex,
+			sceneState = scene.states and scene.states.currentName or nil,
+		},
+		activePlayerIndex = scene.activeIndex,
+		board = {
+			width = board.width,
+			height = board.height,
+			tiledMap = board.tiledMap == true,
+			cells = sortedCells(board),
+			renderTiles = renderTiles,
+			objects = objects,
+			triggers = captureTriggers(board),
+			undoHistory = captureHistory(scene, objectIndexes),
+		},
+	}
+end
+
+return LevelSnapshot

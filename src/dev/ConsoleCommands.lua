@@ -1,4 +1,6 @@
 local LevelLoader = require("src.game.LevelLoader")
+local LevelSnapshot = require("src.game.LevelSnapshot")
+local json = require("vendor.json")
 
 local ConsoleCommands = {}
 
@@ -46,57 +48,36 @@ function ConsoleCommands.register(console)
 		return "Shell-quoted logger path copied: " .. quotedPath
 	end)
 
-	console:registerCommand("show-undo-history", "show player paths for each undo", function(context, args)
-		local board = context and context.board
-		if not board then return "No active board." end
+	console:registerCommand("copy-level-state", "copy the current level state as JSON", function(context)
+		local scene = context and context.scene
+		if not scene or not scene.board then return "No active level to capture." end
 
-		local mode = (args[1] or "toggle"):lower()
-		if mode == "on" then
-			board.debugShowUndoHistory = true
-		elseif mode == "off" then
-			board.debugShowUndoHistory = false
-		elseif mode == "toggle" then
-			board.debugShowUndoHistory = not board.debugShowUndoHistory
-		else
-			return "Usage: show-undo-history [on|off|toggle]"
-		end
-		return "Undo history " .. (board.debugShowUndoHistory and "on" or "off") .. "."
+		local ok, encoded = pcall(json.encode, LevelSnapshot.capture(scene))
+		if not ok then return "Could not encode level state: " .. tostring(encoded) end
+		local copied, err = pcall(love.system.setClipboardText, encoded)
+		if not copied then return "Could not copy level state: " .. tostring(err) end
+		return "Level state JSON copied (" .. #encoded .. " characters)."
 	end)
 
-	console:registerCommand("show-narrative-triggers", "show outlines and IDs for Tiled narrative triggers", function(context, args)
+	console:registerToggleCommand("show-undo-history", "show player paths for each undo", function(context, enabled)
 		local board = context and context.board
-		if not board then return "No active board." end
-
-		local mode = (args[1] or "toggle"):lower()
-		if mode == "on" then
-			board.debugShowNarrativeTriggers = true
-		elseif mode == "off" then
-			board.debugShowNarrativeTriggers = false
-		elseif mode == "toggle" then
-			board.debugShowNarrativeTriggers = not board.debugShowNarrativeTriggers
-		else
-			return "Usage: show-narrative-triggers [on|off|toggle]"
-		end
-		return "Narrative trigger outlines "
-			.. (board.debugShowNarrativeTriggers and "on" or "off") .. "."
+		if board then board.debugShowUndoHistory = enabled end
+		return "Undo history " .. (enabled and "on" or "off") .. "."
 	end)
 
-	console:registerCommand("mobile-controls", "show or hide mobile touch controls", function(context, args)
+	console:registerToggleCommand("show-narrative-triggers", "show outlines and IDs for Tiled narrative triggers", function(context, enabled)
+		local board = context and context.board
+		if board then board.debugShowNarrativeTriggers = enabled end
+		return "Narrative trigger outlines " .. (enabled and "on" or "off") .. "."
+	end)
+
+	console:registerToggleCommand("mobile-controls", "show or hide mobile touch controls", function(context, enabled)
 		local game = context and context.game
-		if not game or not game.mobileControls then return "Mobile controls are unavailable." end
-		local mode = (args[1] or "toggle"):lower()
-		if mode == "on" then
-			game.mobileControls.enabled = true
-		elseif mode == "off" then
-			game.mobileControls.enabled = false
-			game.mobileControls:resetTouches()
-		elseif mode == "toggle" then
-			game.mobileControls.enabled = not game.mobileControls.enabled
-			if not game.mobileControls.enabled then game.mobileControls:resetTouches() end
-		else
-			return "Usage: mobile-controls [on|off|toggle]"
+		if game and game.mobileControls then
+			game.mobileControls.enabled = enabled
+			if not enabled then game.mobileControls:resetTouches() end
 		end
-		return "Mobile controls " .. (game.mobileControls.enabled and "on" or "off") .. "."
+		return "Mobile controls " .. (enabled and "on" or "off") .. "."
 	end)
 
 	console:registerCommand("force reload", "restart the game and reload assets and levels", function(context)
@@ -108,21 +89,10 @@ function ConsoleCommands.register(console)
 		love.game = Game.new()
 	end)
 
-	console:registerCommand("show-solid", "toggle outlines for solid cells and objects", function(context, args)
+	console:registerToggleCommand("show-solid", "toggle outlines for solid cells and objects", function(context, enabled)
         local board = context and context.board
-        if not board then return "No active board." end
-
-        local mode = (args[1] or "toggle"):lower()
-        if mode == "on" then
-            board.debugShowSolid = true
-        elseif mode == "off" then
-            board.debugShowSolid = false
-        elseif mode == "toggle" then
-            board.debugShowSolid = not board.debugShowSolid
-        else
-            return "Usage: show-solid [on|off|toggle]"
-        end
-        return "Solid outlines " .. (board.debugShowSolid and "on" or "off") .. "."
+        if board then board.debugShowSolid = enabled end
+        return "Solid outlines " .. (enabled and "on" or "off") .. "."
     end)
 
     console:registerCommand("help", "list available commands", function(_, _, activeConsole)
@@ -150,6 +120,20 @@ function ConsoleCommands.register(console)
         end
         return "Jumped to " .. level.name .. "."
     end)
+
+	console:registerCommand("next-level", "load the next level in the current queue", function(context)
+		local scene = context and context.scene
+		if not scene or not scene.jumpToLevel or not scene.levels then
+			return "No active level queue."
+		end
+
+		local nextIndex = scene.levelIndex + 1
+		local nextLevel = scene.levels[nextIndex]
+		if not nextLevel then return "Already at the last level in the queue." end
+
+		scene:jumpToLevel(nextIndex)
+		return "Next level: " .. nextLevel.name .. "."
+	end)
 end
 
 return ConsoleCommands

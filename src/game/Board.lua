@@ -43,6 +43,7 @@ function Board:addMapTile(x, y, tileId)
     self.renderTiles[#self.renderTiles + 1] = {
         x = x,
         y = y,
+        tileId = tileId,
         quad = self.assets:tileQuad(tileId),
     }
 end

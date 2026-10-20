@@ -1,5 +1,5 @@
 {
-    "activeFile": "level6.tmj",
+    "activeFile": "level2.tmj",
     "expandedProjectPaths": [
         "."
     ],
@@ -15,8 +15,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 168.25,
-                "y": 214.5
+                "x": 320,
+                "y": 317.25
             }
         },
         "level0.tmj#rogues": {
@@ -40,8 +40,8 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 90.75,
-                "y": 140.5
+                "x": 320,
+                "y": 320.25
             }
         },
         "level1.tmj#tiles": {
@@ -65,8 +65,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 91.25,
-                "y": 137.5
+                "x": 320,
+                "y": 320.25
             }
         },
         "level2.tmj#tiles": {
@@ -79,8 +79,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 111.25,
-                "y": 161
+                "x": 320,
+                "y": 320.25
             }
         },
         "level3.tmj#tiles": {
@@ -118,8 +118,8 @@
             "scale": 0.60265625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 634.6901737101373,
-                "y": 444.6979517759918
+                "x": 320.24889810733737,
+                "y": 319.41923774954637
             }
         },
         "level6.tmj#rogues": {
@@ -135,8 +135,8 @@
             "scale": 1.5,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 241.66666666666663,
-                "y": 220.66666666666669
+                "x": 319.99999999999994,
+                "y": 320.33333333333326
             }
         },
         "level_playground.tmj#rogues": {
@@ -163,12 +163,12 @@
     "recentFiles": [
         "level0.tmj",
         "level1.tmj",
-        "level2.tmj",
-        "level3.tmj",
-        "level_playground.tmj",
-        "level4.tmj",
-        "level5.tmj",
         "level6.tmj",
+        "level5.tmj",
+        "level4.tmj",
+        "level_playground.tmj",
+        "level3.tmj",
+        "level2.tmj",
         "level0.tmx.tmj",
         "level1.tmx.tmj"
     ],

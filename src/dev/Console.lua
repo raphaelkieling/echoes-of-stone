@@ -1,7 +1,19 @@
 local Fonts = require("src.ui.Fonts")
+local json = require("vendor.json")
 
 local Console = {}
 Console.__index = Console
+local SETTINGS_PATH = "console-settings.json"
+
+local function loadPreferences()
+    if not love or not love.filesystem then return {toggles = {}} end
+    local contents = love.filesystem.read(SETTINGS_PATH)
+    if not contents then return {toggles = {}} end
+    local ok, preferences = pcall(json.decode, contents)
+    if not ok or type(preferences) ~= "table" then return {toggles = {}} end
+    if type(preferences.toggles) ~= "table" then preferences.toggles = {} end
+    return preferences
+end
 
 local function splitWords(text)
     local words = {}
@@ -30,6 +42,7 @@ function Console.new(events)
         input = "",
         commands = {},
         output = {},
+        preferences = loadPreferences(),
         suggestionSelection = 1,
         suppressTextInput = false,
     }, Console)
@@ -41,6 +54,28 @@ function Console:registerCommand(name, description, callback)
 		"invalid console command name")
     assert(type(callback) == "function", "console command callback must be a function")
     self.commands[name] = {name = name, description = description or "", callback = callback}
+end
+
+function Console:registerToggleCommand(name, description, callback)
+    self:registerCommand(name, description, callback)
+    self.commands[name].toggle = true
+end
+
+function Console:savePreferences()
+    if not love or not love.filesystem then return false end
+    local ok, contents = pcall(json.encode, self.preferences)
+    if not ok then return false end
+    local written = love.filesystem.write(SETTINGS_PATH, contents)
+    return written == true
+end
+
+function Console:applyToggles(context)
+    for name, command in pairs(self.commands) do
+        if command.toggle then
+            local enabled = self.preferences.toggles[name] == true
+            pcall(command.callback, context, enabled, self)
+        end
+    end
 end
 
 function Console:write(message)
@@ -93,7 +128,27 @@ function Console:execute(context)
 		return
 	end
 
-	local ok, result = pcall(command.callback, context, arguments or {}, self)
+	local ok, result
+	if command.toggle then
+		local mode = ((arguments or {})[1] or "toggle"):lower()
+		local current = self.preferences.toggles[command.name] == true
+		local enabled
+		if mode == "on" then
+			enabled = true
+		elseif mode == "off" then
+			enabled = false
+		elseif mode == "toggle" then
+			enabled = not current
+		else
+			self:write("Usage: " .. command.name .. " [on|off|toggle]")
+			return
+		end
+		self.preferences.toggles[command.name] = enabled
+		self:savePreferences()
+		ok, result = pcall(command.callback, context, enabled, self)
+	else
+		ok, result = pcall(command.callback, context, arguments or {}, self)
+	end
 	if self.events then
 		self.events:emit("command.executed", {command = command.name, succeeded = ok})
 	end
@@ -184,10 +239,10 @@ function Console:draw()
     local prefix = self.input:match("^%s*(.-)%s*$") or ""
     local matches = self:matchingCommands(prefix)
     local y = 24
-    local rowHeight = 22
+	local rowHeight = 28
     local maxHeight = math.max(150, screenHeight - 48)
-    local height = math.min(maxHeight, 110 + #matches * rowHeight)
-    local visibleCount = math.max(1, math.floor((height - 110) / rowHeight))
+	local height = math.min(maxHeight, 120 + #matches * rowHeight)
+	local visibleCount = math.max(1, math.floor((height - 120) / rowHeight))
     local firstIndex = math.max(1, math.min(self.suggestionSelection, #matches - visibleCount + 1))
     local lastIndex = math.min(#matches, firstIndex + visibleCount - 1)
     love.graphics.push("all")
@@ -204,10 +259,10 @@ function Console:draw()
     Fonts.set(29)
     love.graphics.print("> " .. self.input .. "_", x + 18, y + 37)
 
-    Fonts.set(19)
+	Fonts.set(22)
     for index = firstIndex, lastIndex do
         local command = matches[index]
-        local rowY = y + 76 + (index - firstIndex) * rowHeight
+		local rowY = y + 76 + (index - firstIndex) * rowHeight
         local selected = index == self.suggestionSelection
         if selected then
             love.graphics.setColor(0.055, 0.19, 0.12, 0.78)
@@ -215,8 +270,25 @@ function Console:draw()
         end
         love.graphics.setColor(selected and 0.43 or 0.72,
             selected and 1 or 0.86, selected and 0.64 or 0.78, 1)
-        love.graphics.print(command.name .. "  -  " .. command.description,
-            x + 22, rowY - 1)
+		local statusWidth = command.toggle and 112 or 0
+		local description = command.name .. "  -  " .. command.description
+		local maxTextWidth = width - 48 - statusWidth
+		local font = love.graphics.getFont()
+		while #description > 3 and font:getWidth(description) > maxTextWidth do
+			description = description:sub(1, -2)
+		end
+		if description ~= command.name .. "  -  " .. command.description then
+			description = description:sub(1, -4) .. "..."
+		end
+		love.graphics.print(description, x + 22, rowY - 1)
+		if command.toggle then
+			local enabled = self.preferences.toggles[command.name] == true
+			local indicator = enabled and "[x] ON" or "[ ] OFF"
+			love.graphics.setColor(enabled and 0.43 or 0.60,
+				enabled and 1 or 0.66, enabled and 0.64 or 0.60, 1)
+			love.graphics.printf(indicator, x + width - statusWidth - 18,
+				rowY - 1, statusWidth, "right")
+		end
     end
 
     if #self.output > 0 then
