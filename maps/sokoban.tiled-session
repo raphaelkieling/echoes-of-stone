@@ -9,11 +9,14 @@
             "scaleInEditor": 1
         },
         "level0.tmj": {
-            "scale": 1.3522656249999998,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                7
+            ],
+            "scale": 2,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 158.99243168293955,
-                "y": 232.57265006643945
+                "x": 168.25,
+                "y": 214.5
             }
         },
         "level0.tmj#rogues": {
@@ -37,8 +40,8 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 91,
-                "y": 140.75
+                "x": 90.75,
+                "y": 140.5
             }
         },
         "level1.tmj#tiles": {
@@ -62,8 +65,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 91.5,
-                "y": 137.75
+                "x": 91.25,
+                "y": 137.5
             }
         },
         "level2.tmj#tiles": {
@@ -76,8 +79,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 111.5,
-                "y": 161.25
+                "x": 111.25,
+                "y": 161
             }
         },
         "level3.tmj#tiles": {
@@ -87,8 +90,8 @@
             "scale": 0.9866,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 228.05594972633287,
-                "y": 164.70707480235149
+                "x": 320.2919116156497,
+                "y": 319.7851206162578
             }
         },
         "level4.tmj#rogues": {
@@ -101,8 +104,8 @@
             "scale": 1.0529,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 257.3843669864185,
-                "y": 210.3713553043974
+                "x": 320.0683825624466,
+                "y": 319.59350365656763
             }
         },
         "level5.tmj#rogues": {
@@ -115,8 +118,8 @@
             "scale": 0.60265625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 646.305418719212,
-                "y": 457.97251750064817
+                "x": 634.6901737101373,
+                "y": 444.6979517759918
             }
         },
         "level6.tmj#rogues": {
@@ -130,10 +133,10 @@
                 6
             ],
             "scale": 1.5,
-            "selectedLayer": 0,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 290.3333333333333,
-                "y": 207.33333333333337
+                "x": 241.66666666666663,
+                "y": 220.66666666666669
             }
         },
         "level_playground.tmj#rogues": {
@@ -156,7 +159,7 @@
         "level6.tmj"
     ],
     "project": "sokoban.tiled-project",
-    "property.type": "bool",
+    "property.type": "string",
     "recentFiles": [
         "level0.tmj",
         "level1.tmj",

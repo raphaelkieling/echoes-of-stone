@@ -20,40 +20,6 @@ With `lua` installed:
 lua tests/run.lua
 ```
 
-## Components
-
-Game objects are compositions of components. A character keeps its character-only pieces together under the `Character` component:
-
-```text
-GameObject
-├── Transform
-├── InteractiveObject
-└── Character
-    ├── Player
-    ├── CharacterClass (Dwarf, Wizard, ...)
-    ├── CharacterMovement
-    ├── StateMachine (Idle, Walking, Pushing)
-    ├── Animation
-    ├── SpriteRenderer
-    └── MovementEffects
-```
-
-`CharacterFactory` assembles this composition; `CharacterMovement` handles shared move orchestration, while each class component implements its own ability. The nested components remain available through `gameObject:getComponent(name)`. To extend a character, add a component to its `Character` container rather than adding class-specific conditionals to movement code. Character classes are registered in `src/characters/Classes.lua`.
-
-## Scenes and states
-
-`SceneManager` swaps the active scene root. Scenes and world objects share the `Node` parent/child lifecycle, while components add behavior to game objects. The playing scene is composed like this:
-
-```text
-PlayingScene
-├── Board
-│   ├── Character
-│   └── Box
-└── PlayingHud
-```
-
-`src/core/StateMachine.lua` is independent of scenes and game objects. `PlayingScene` uses it for `Entering`, `Playing`, `Paused`, `LevelTransition`, and `Completed`; the character `StateMachine` component is a thin adapter to the same core implementation.
-
 ## Desktop builds
 
 On macOS, with `curl`, `zip`, and `ditto` available:

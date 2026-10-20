@@ -1,6 +1,7 @@
 local Node = require("src.core.Node")
 local BuildConfig = require("src.settings.BuildConfig")
 local UI = require("src.ui.Theme")
+local DialogueBox = require("src.ui.DialogueBox")
 
 local PlayingHud = Node:extend()
 
@@ -8,17 +9,24 @@ function PlayingHud:init(scene)
 	Node.init(self, "PlayingHud")
 	self.scene = scene
 	self.drawSpace = "screen"
+	self:addChild(DialogueBox(scene.narratives))
 end
 
 function PlayingHud:draw()
 	local scene = self.scene
 	if not scene.board then return end
+	if scene.states:is("narrative") then
+		scene.mobileControls:draw()
+		self:drawChildren("screen", scene)
+		return
+	end
 	local paused = scene.states:is("paused")
 	local completed = scene.states:is("completed")
 	if not paused and not completed then self:drawLevelTimeline() end
 	if paused or completed then self:drawPause(completed) end
 	self:drawDevelopmentFilename()
 	scene.mobileControls:draw()
+	self:drawChildren("screen", scene)
 end
 
 function PlayingHud:drawDevelopmentFilename()

@@ -68,7 +68,26 @@
          "draworder":"topdown",
          "id":6,
          "name":"Entities",
-         "objects":[],
+         "objects":[
+                {
+                 "height":0,
+                 "id":11,
+                 "name":"",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"narrative_trigger",
+                         "type":"string",
+                         "value":"altar_discovery"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":176,
+                 "y":112
+                }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -76,7 +95,7 @@
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":11,
+ "nextobjectid":12,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.2",

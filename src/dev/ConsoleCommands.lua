@@ -63,6 +63,24 @@ function ConsoleCommands.register(console)
 		return "Undo history " .. (board.debugShowUndoHistory and "on" or "off") .. "."
 	end)
 
+	console:registerCommand("show-narrative-triggers", "show outlines and IDs for Tiled narrative triggers", function(context, args)
+		local board = context and context.board
+		if not board then return "No active board." end
+
+		local mode = (args[1] or "toggle"):lower()
+		if mode == "on" then
+			board.debugShowNarrativeTriggers = true
+		elseif mode == "off" then
+			board.debugShowNarrativeTriggers = false
+		elseif mode == "toggle" then
+			board.debugShowNarrativeTriggers = not board.debugShowNarrativeTriggers
+		else
+			return "Usage: show-narrative-triggers [on|off|toggle]"
+		end
+		return "Narrative trigger outlines "
+			.. (board.debugShowNarrativeTriggers and "on" or "off") .. "."
+	end)
+
 	console:registerCommand("mobile-controls", "show or hide mobile touch controls", function(context, args)
 		local game = context and context.game
 		if not game or not game.mobileControls then return "Mobile controls are unavailable." end

@@ -8,6 +8,9 @@ local Box = require("src.components.Box")
 local Shake = require("src.components.Shake")
 local CharacterFactory = require("src.characters.CharacterFactory")
 
+local DEBUG_CELL_SIZE = 64
+local narrativeTriggerFont
+
 local Board = Node:extend()
 
 function Board:init(assets, width, height)
@@ -20,9 +23,11 @@ function Board:init(assets, width, height)
     self.players = {}
     self.boxes = {}
     self.targets = {}
+    self.triggers = {}
     self.renderTiles = {}
     self.debugShowSolid = false
     self.debugShowUndoHistory = false
+    self.debugShowNarrativeTriggers = false
     self.tiledMap = false
 end
 
@@ -81,6 +86,21 @@ function Board:addObject(object)
     return object
 end
 
+function Board:addTrigger(object, trigger)
+    self.triggers[#self.triggers + 1] = {object = object, component = trigger}
+    self:addChild(object)
+    return object
+end
+
+function Board:processMovement(changes)
+    if not self.events then return end
+    for _, change in ipairs(changes or {}) do
+        for _, entry in ipairs(self.triggers) do
+            entry.component:onObjectMoved(change, self.events)
+        end
+    end
+end
+
 function Board:spawnPlayer(classId, x, y)
     return self:addObject(CharacterFactory.create(classId, x, y, self.assets))
 end
@@ -128,6 +148,7 @@ function Board:update(dt)
 end
 
 function Board:draw(activePlayer)
+	local sceneContext = activePlayer
     if activePlayer and type(activePlayer.currentPlayer) == "function" then
         activePlayer = activePlayer:currentPlayer()
     end
@@ -212,6 +233,45 @@ function Board:draw(activePlayer)
         end
         love.graphics.pop()
     end
+
+	if self.debugShowNarrativeTriggers then
+		self:drawNarrativeTriggers(sceneContext and sceneContext.camera)
+	end
+end
+
+function Board:drawNarrativeTriggers(camera)
+	if #self.triggers == 0 then return end
+	narrativeTriggerFont = narrativeTriggerFont or love.graphics.newFont(14)
+	local zoom = camera and camera.scale or 1
+	local inverseZoom = zoom > 0 and 1 / zoom or 1
+	local labelPadding = 3 * inverseZoom
+	local cellSize = self.objects[1]
+		and self.objects[1]:getComponent("Transform").cellSize or DEBUG_CELL_SIZE
+
+	love.graphics.push("all")
+	love.graphics.setFont(narrativeTriggerFont)
+	love.graphics.setLineWidth(2 * inverseZoom)
+	for _, entry in ipairs(self.triggers) do
+		local trigger = entry.component
+		local red, green, blue = trigger.debugColor[1], trigger.debugColor[2], trigger.debugColor[3]
+		love.graphics.setColor(red, green, blue, 0.92)
+		for _, cell in ipairs(trigger:getDebugCells()) do
+			love.graphics.rectangle("line", cell.x * cellSize + 2, cell.y * cellSize + 2,
+				cellSize - 4, cellSize - 4)
+		end
+
+		local labelX, labelY = trigger:getDebugLabelPosition(cellSize)
+		local labelWidth = narrativeTriggerFont:getWidth(trigger.narrativeId) * inverseZoom
+		local labelHeight = narrativeTriggerFont:getHeight() * inverseZoom
+		labelY = labelY - labelHeight - 4 * inverseZoom
+		love.graphics.setColor(0, 0, 0, 0.88)
+		love.graphics.rectangle("fill", labelX, labelY,
+			labelWidth + labelPadding * 2, labelHeight + labelPadding * 2)
+		love.graphics.setColor(red, green, blue, 1)
+		love.graphics.print(trigger.narrativeId, labelX + labelPadding,
+			labelY + labelPadding, 0, inverseZoom, inverseZoom)
+	end
+	love.graphics.pop()
 end
 
 function Board:allBoxesOnTargets()

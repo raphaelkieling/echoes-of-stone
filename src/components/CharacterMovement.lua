@@ -81,7 +81,7 @@ function CharacterMovement:move(board, direction, history, effectSink)
 			direction = direction,
 		})
 	end
-	return true
+	return true, changes
 end
 
 return CharacterMovement

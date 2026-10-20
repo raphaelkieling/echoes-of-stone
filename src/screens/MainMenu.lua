@@ -17,15 +17,11 @@ function MainMenu:draw()
     UI.setFont(88, width, height)
     love.graphics.printf("ECHOES OF STONE", 0, height * 0.18, width, "center")
 
-    local panelX, panelY = 44 * scale, height - 290 * scale
-    local panelWidth, panelHeight = 360 * scale, 210 * scale
+    local panelX, panelY = 44 * scale, height - 230 * scale
+    local panelWidth, panelHeight = 360 * scale, 150 * scale
     UI.drawPanel(panelX, panelY, panelWidth, panelHeight)
-    UI.setColor("accent")
-    UI.setFont(23, width, height)
-    love.graphics.print("MAIN MENU", panelX + 24 * scale, panelY + 17 * scale)
-    UI.drawDivider(panelX + 20 * scale, panelY + 52 * scale, panelWidth - 40 * scale)
 
-    local rowY = panelY + 67 * scale
+    local rowY = panelY + 18 * scale
     for index, label in ipairs(self.options) do
         local y = rowY + (index - 1) * 43 * scale
         if index == self.selected then
