@@ -65,6 +65,113 @@ local function propertiesByName(properties)
     return result
 end
 
+local function xmlAttributes(source)
+	local attributes = {}
+	for name, value in source:gmatch('([%w_:%-]+)%s*=%s*"([^"]*)"') do
+		attributes[name] = value
+	end
+	for name, value in source:gmatch("([%w_:%-]+)%s*=%s*'([^']*)'") do
+		attributes[name] = value
+	end
+	return attributes
+end
+
+local function typedProperty(attributes, body)
+	local value = attributes.value
+	if value == nil then value = (body or ""):match("^%s*(.-)%s*$") end
+	if attributes.type == "bool" then return value == "true" end
+	if attributes.type == "int" or attributes.type == "float" then
+		return tonumber(value) or value
+	end
+	return value
+end
+
+local function propertiesFromXml(source)
+	local properties = {}
+	local propertyBlock = source:match("<properties[^>]*>(.-)</properties>") or source
+	for rawAttributes, body in propertyBlock:gmatch("<property%s+([^>]-)>(.-)</property>") do
+		local attributes = xmlAttributes(rawAttributes)
+		properties[#properties + 1] = {
+			name = attributes.name,
+			value = typedProperty(attributes, body),
+		}
+	end
+	for rawAttributes in propertyBlock:gmatch("<property%s+([^>]-)/%s*>") do
+		local attributes = xmlAttributes(rawAttributes)
+		properties[#properties + 1] = {
+			name = attributes.name,
+			value = typedProperty(attributes),
+		}
+	end
+	return properties
+end
+
+local function parseTsxTileset(sourcePath, firstgid)
+	local contents, readError = love.filesystem.read(sourcePath)
+	assert(contents, "failed to read external tileset " .. sourcePath .. ": " .. tostring(readError))
+	local root = contents:match("<tileset%s+([^>]-)>")
+	assert(root, "invalid TSX tileset: " .. sourcePath)
+	local attributes = xmlAttributes(root)
+	local imageTag = contents:match("<image%s+([^>]-)/?%s*>")
+	local image = imageTag and xmlAttributes(imageTag) or {}
+	local tiles = {}
+	for rawTileAttributes, body in contents:gmatch("<tile%s+([^>]-)>(.-)</tile>") do
+		local tileAttributes = xmlAttributes(rawTileAttributes)
+		local id = tonumber(tileAttributes.id)
+		if id then
+			tiles[#tiles + 1] = {id = id, properties = propertiesFromXml(body)}
+		end
+	end
+
+	local tileWidth = tonumber(attributes.tilewidth)
+	local tileHeight = tonumber(attributes.tileheight)
+	local imageWidth = tonumber(image.width)
+	local imageHeight = tonumber(image.height)
+	local columns = tonumber(attributes.columns)
+	return {
+		firstgid = firstgid,
+		name = attributes.name,
+		tilewidth = tileWidth,
+		tileheight = tileHeight,
+		tilecount = tonumber(attributes.tilecount)
+			or (imageWidth and imageHeight and tileWidth and tileHeight
+				and math.floor(imageWidth / tileWidth) * math.floor(imageHeight / tileHeight)),
+		columns = columns or (imageWidth and tileWidth and math.floor(imageWidth / tileWidth)),
+		objectalignment = attributes.objectalignment,
+		image = image.source,
+		imagewidth = imageWidth,
+		imageheight = imageHeight,
+		tiles = tiles,
+		source = sourcePath,
+	}
+end
+
+local function resolveTilesets(mapPath, tilesets)
+	local mapDirectory = mapPath:match("^(.*)/[^/]+$") or ""
+	local resolved = {}
+	for _, tileset in ipairs(tilesets or {}) do
+		if not tileset.source then
+			resolved[#resolved + 1] = tileset
+		else
+			local sourcePath = mapDirectory ~= "" and (mapDirectory .. "/" .. tileset.source) or tileset.source
+			local lowerPath = sourcePath:lower()
+			if lowerPath:match("%.tsx$") then
+				resolved[#resolved + 1] = parseTsxTileset(sourcePath, tileset.firstgid)
+			elseif lowerPath:match("%.tsj$") or lowerPath:match("%.json$") then
+				local contents, readError = love.filesystem.read(sourcePath)
+				assert(contents, "failed to read external tileset " .. sourcePath .. ": " .. tostring(readError))
+				local external = json.decode(contents)
+				external.firstgid = tileset.firstgid
+				external.source = sourcePath
+				resolved[#resolved + 1] = external
+			else
+				assert(false, "unsupported external tileset format: " .. sourcePath)
+			end
+		end
+	end
+	return resolved
+end
+
 local function makeTilesetMetadata(map)
     local result = {}
     for _, tileset in ipairs(map.tilesets or {}) do
@@ -149,6 +256,7 @@ local function loadTiled(path, assets, events)
     assert(not map.infinite, "infinite Tiled maps are not supported: " .. path)
     assert(map.width and map.height and map.tilewidth and map.tileheight,
         "Tiled map is missing dimensions: " .. path)
+    map.tilesets = resolveTilesets(path, map.tilesets)
 
     local board = Board(assets, map.width, map.height)
     board.tiledMap = true
