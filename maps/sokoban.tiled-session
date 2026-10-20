@@ -1,5 +1,5 @@
 {
-    "activeFile": "level2.tmj",
+    "activeFile": "level0.tmj",
     "expandedProjectPaths": [
         "."
     ],
@@ -21,11 +21,11 @@
             }
         },
         "level0.tmj": {
-            "scale": 1.5,
+            "scale": 3,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 244.99999999999997,
-                "y": 164.99999999999997
+                "x": 152.16666666666669,
+                "y": 213.83333333333331
             }
         },
         "level0.tmj#rogues": {
@@ -175,6 +175,10 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "tileset_characters.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "tileset_map_01.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 1
@@ -189,22 +193,27 @@
         "level_playground.tmj",
         "level4.tmj",
         "level5.tmj",
-        "level6.tmj"
+        "level6.tmj",
+        "tileset_characters.tsx",
+        "level1-1.tmj",
+        "level-tutorial-undo.tmj",
+        "tileset_map_01.tsx"
     ],
     "project": "sokoban.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "tileset_map_01.tsx",
-        "level0.tmj",
-        "level1.tmj",
+        "level-tutorial-undo.tmj",
+        "level1-1.tmj",
+        "tileset_characters.tsx",
         "level6.tmj",
         "level5.tmj",
         "level4.tmj",
         "level_playground.tmj",
         "level3.tmj",
         "level2.tmj",
-        "level0.tmx.tmj",
-        "level1.tmx.tmj"
+        "level1.tmj",
+        "level0.tmj"
     ],
     "tileset.embedInMap": false,
     "tileset.lastUsedFormat": "tsx"

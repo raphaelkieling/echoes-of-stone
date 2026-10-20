@@ -15,31 +15,32 @@ function LevelSelect:draw()
     local width, height = love.graphics.getDimensions()
     local scale = UI.scale(width, height)
     local panelWidth = math.min(width - 40 * scale, 720 * scale)
-    local rowHeight = 52 * scale
-    local panelHeight = math.min(height - 80 * scale, (#self.levels * rowHeight) + 112 * scale)
-    local panelX, panelY = (width - panelWidth) / 2, math.max(30 * scale, (height - panelHeight) / 2)
+    local rowHeight = 42 * scale
+    local panelHeight = math.min(height - 48 * scale, (#self.levels * rowHeight) + 88 * scale)
+    local panelX, panelY = (width - panelWidth) / 2, math.max(18 * scale, (height - panelHeight) / 2)
 
     UI.drawPanel(panelX, panelY, panelWidth, panelHeight)
     UI.setColor("text")
-    UI.setFont(50, width, height)
-    love.graphics.printf("SELECT LEVEL", panelX, panelY + 17 * scale, panelWidth, "center")
-    UI.drawDivider(panelX + 24 * scale, panelY + 78 * scale, panelWidth - 48 * scale)
+    UI.setFont(44, width, height)
+    love.graphics.printf("SELECT LEVEL", panelX, panelY + 10 * scale, panelWidth, "center")
+    UI.drawDivider(panelX + 18 * scale, panelY + 59 * scale, panelWidth - 36 * scale)
 
-    local rowY = panelY + 91 * scale
+    local rowY = panelY + 68 * scale
     for index, level in ipairs(self.levels) do
         local label = level.name or string.format("lvl_%d.txt", level.number)
         local y = rowY + (index - 1) * rowHeight
         if index == self.selected then
-            UI.drawSelection(panelX + 14 * scale, y - 4 * scale, panelWidth - 28 * scale, 44 * scale)
+            UI.drawSelection(panelX + 10 * scale, y + 2 * scale, panelWidth - 20 * scale, 38 * scale)
         end
         UI.setColor(index == self.selected and "accent" or "text")
-        UI.setFont(31, width, height)
+        UI.setFont(29, width, height)
+        local textY = y + (rowHeight - love.graphics.getFont():getHeight()) / 2
         local number = string.format("%02d", index)
         love.graphics.print((index == self.selected and "> " or "  ") .. number .. "  /  " .. label,
-            panelX + 32 * scale, y)
+            panelX + 22 * scale, textY - 2)
 
-        local markerX = panelX + panelWidth - 34 * scale
-        local markerY = y + 15 * scale
+        local markerX = panelX + panelWidth - 26 * scale
+        local markerY = y + rowHeight / 2
         local markerRadius = 8 * scale
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.circle("fill", markerX, markerY, markerRadius + 2 * scale)
