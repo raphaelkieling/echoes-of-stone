@@ -19,6 +19,7 @@ local FOLLOW_ZOOM = 1.8
 local CAMERA_SMOOTHING = 9
 local MOVE_REPEAT_DELAY = 0.3
 local MOVE_REPEAT_INTERVAL = 0.12
+local UNDO_REPEAT_INTERVAL = 0.6
 
 local function boxesOnTargets(board)
 	local boxes = {}
@@ -51,6 +52,8 @@ function PlayingScene:init(game)
 	self.cameraIntro = nil
 	self.heldMoveKey = nil
 	self.moveRepeatTimer = 0
+	self.heldUndoKey = nil
+	self.undoRepeatTimer = 0
 	self.pauseSelection = 1
 	self.states = StateMachine(self, PlayingStates)
 	self.hud = self:addChild(PlayingHud(self))
@@ -171,6 +174,7 @@ function PlayingScene:updatePlaying(dt)
 	self:updateCamera(dt)
 	self:updateBufferedMovement()
     self:updateHeldMovement(dt)
+    self:updateHeldUndo(dt)
     if self.board and not self.board:isMoving() and self.board:allBoxesOnTargets() then
         self:completeLevel()
     end
@@ -283,11 +287,38 @@ function PlayingScene:updateMobileMovement(dt)
 	self.moveRepeatTimer = MOVE_REPEAT_INTERVAL
 end
 
+function PlayingScene:updateHeldUndo(dt)
+	if not self.heldUndoKey then return end
+	if not love.keyboard.isDown(self.heldUndoKey) then
+		self.heldUndoKey = nil
+		self.undoRepeatTimer = 0
+		return
+	end
+
+	if #self.history.actions == 0 then
+		self.heldUndoKey = nil
+		self.undoRepeatTimer = 0
+		return
+	end
+
+	self.undoRepeatTimer = self.undoRepeatTimer - dt
+	if self.undoRepeatTimer > 0 or self.board:isMoving() then return end
+
+	if not self:undo() then
+		self.heldUndoKey = nil
+		self.undoRepeatTimer = 0
+		return
+	end
+	self.undoRepeatTimer = UNDO_REPEAT_INTERVAL
+end
+
 function PlayingScene:clearHeldMovement()
     self.heldMoveKey = nil
     self.moveRepeatTimer = 0
 	self.pendingDirection = nil
 	self.mobileMoveDirection = nil
+	self.heldUndoKey = nil
+	self.undoRepeatTimer = 0
 end
 
 function PlayingScene:draw()
@@ -431,7 +462,11 @@ function PlayingScene:handlePlayingKey(key)
     if Keymap.matches("switchPlayer", key) then
         self:selectNextPlayer()
     elseif Keymap.matches("undo", key) then
-		self:undo()
+		if self.heldUndoKey ~= key then
+			self.heldUndoKey = key
+			self.undoRepeatTimer = UNDO_REPEAT_INTERVAL
+			self:undo()
+		end
     end
 end
 
