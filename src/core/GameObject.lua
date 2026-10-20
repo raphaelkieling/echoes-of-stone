@@ -1,9 +1,9 @@
-local Class = require("src.core.Class")
+local Node = require("src.core.Node")
 
-local GameObject = Class:extend()
+local GameObject = Node:extend()
 
 function GameObject:init(name)
-    self.name = name or "GameObject"
+    Node.init(self, name or "GameObject")
     self.components = {}
     self.componentOrder = {}
 end
@@ -39,12 +39,14 @@ function GameObject:update(dt)
     for _, component in ipairs(self.componentOrder) do
         component:update(dt)
     end
+    self:updateChildren(dt)
 end
 
 function GameObject:draw(context)
     for _, component in ipairs(self.componentOrder) do
         component:draw(context)
     end
+    self:drawChildren(nil, context)
 end
 
 return GameObject

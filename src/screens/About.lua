@@ -1,11 +1,11 @@
 local Keymap = require("src.settings.Keymap")
+local Scene = require("src.core.Scene")
 local UI = require("src.ui.Theme")
 
-local About = {}
-About.__index = About
+local About = Scene:extend()
 
-function About.new(game)
-    return setmetatable({game = game}, About)
+function About:init(game)
+    Scene.init(self, "About", game)
 end
 
 function About:draw()
@@ -48,7 +48,7 @@ function About:draw()
     UI.setColor("muted")
     UI.setFont(20, width, height)
     love.graphics.printf("datagoblin.itch.io/monogram", panelX, panelY + 387 * scale, panelWidth, "center")
-
+    self:drawChildren(nil, self)
 end
 
 function About:keypressed(key)

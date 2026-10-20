@@ -1,4 +1,5 @@
 local Component = require("src.core.Component")
+local CoreStateMachine = require("src.core.StateMachine")
 
 local StateMachine = Component:extend()
 StateMachine.componentName = "StateMachine"
@@ -9,46 +10,42 @@ function StateMachine:init(states, initialState)
     self.initialState = assert(initialState, "StateMachine needs an initial state")
     self.currentName = nil
     self.current = nil
+    self.machine = nil
 end
 
 function StateMachine:onAttach(owner)
     self.owner = owner
-    self:change(self.initialState)
+    self.machine = CoreStateMachine(owner, self.states, self.initialState)
+    self:sync()
+end
+
+function StateMachine:sync()
+    if not self.machine then return end
+    self.currentName = self.machine.currentName
+    self.current = self.machine.current
 end
 
 function StateMachine:change(name, data)
-    local State = assert(self.states[name], "unknown state: " .. tostring(name))
-    if self.current and self.currentName == name then return false end
-
-    if self.current and self.current.exit then
-        self.current:exit(data)
-    end
-    self.currentName = name
-    self.current = State(self.owner, self)
-    if self.current.enter then
-        self.current:enter(data)
-    end
-    return true
+    local changed = self.machine:change(name, data)
+    self:sync()
+    return changed
 end
 
 function StateMachine:update(dt)
-    if self.current and self.current.update then
-        self.current:update(dt)
-    end
+    self.machine:update(dt)
+    self:sync()
 end
 
-function StateMachine:dispatch(eventName, data)
-    local handler = self.current and self.current[eventName]
-    if not handler then return false end
-    handler(self.current, data)
-    return true
+function StateMachine:dispatch(methodName, ...)
+    local handled = self.machine:dispatch(methodName, ...)
+    self:sync()
+    return handled
 end
 
 function StateMachine:visualOffset()
-    if self.current and self.current.visualOffset then
-        return self.current:visualOffset()
-    end
-    return 0, 0, 0
+    if not self.machine then return 0, 0, 0 end
+    local rotation, offsetX, offsetY = self.machine:dispatch("visualOffset")
+    return rotation or 0, offsetX or 0, offsetY or 0
 end
 
 return StateMachine

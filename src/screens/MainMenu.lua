@@ -1,14 +1,13 @@
-local MainMenu = {}
-MainMenu.__index = MainMenu
+local Scene = require("src.core.Scene")
 local Keymap = require("src.settings.Keymap")
 local UI = require("src.ui.Theme")
 
-function MainMenu.new(game)
-    return setmetatable({
-        game = game,
-        selected = 1,
-        options = {"Start", "About", "Quit"},
-    }, MainMenu)
+local MainMenu = Scene:extend()
+
+function MainMenu:init(game)
+    Scene.init(self, "MainMenu", game)
+    self.selected = 1
+    self.options = {"Start", "About", "Quit"}
 end
 
 function MainMenu:draw()
@@ -37,6 +36,7 @@ function MainMenu:draw()
         love.graphics.print((index == self.selected and "> " or "  ") .. label,
             panelX + 28 * scale, y)
     end
+    self:drawChildren(nil, self)
 end
 
 function MainMenu:keypressed(key)

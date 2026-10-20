@@ -1,16 +1,14 @@
 local LevelLoader = require("src.game.LevelLoader")
+local Scene = require("src.core.Scene")
 local Keymap = require("src.settings.Keymap")
 local UI = require("src.ui.Theme")
 
-local LevelSelect = {}
-LevelSelect.__index = LevelSelect
+local LevelSelect = Scene:extend()
 
-function LevelSelect.new(game)
-    return setmetatable({
-        game = game,
-        levels = LevelLoader.listLevels(),
-        selected = 1,
-    }, LevelSelect)
+function LevelSelect:init(game)
+    Scene.init(self, "LevelSelect", game)
+    self.levels = LevelLoader.listLevels()
+    self.selected = 1
 end
 
 function LevelSelect:draw()
@@ -40,6 +38,7 @@ function LevelSelect:draw()
         love.graphics.print((index == self.selected and "> " or "  ") .. number .. "  /  " .. label,
             panelX + 32 * scale, y)
     end
+    self:drawChildren(nil, self)
 end
 
 function LevelSelect:keypressed(key)

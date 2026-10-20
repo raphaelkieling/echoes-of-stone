@@ -125,13 +125,8 @@ function ConsoleCommands.register(console)
         local game = context and context.game
         if not game or not game.scenes then return "No game scene manager available." end
         local currentScene = context.scene
-        if currentScene and currentScene.loadLevel and currentScene.levels then
-            currentScene.levels = levels
-            currentScene.levelIndex = index
-            currentScene:loadLevel()
-            currentScene.paused = false
-            currentScene.completed = false
-            currentScene.transition = {elapsed = 0, duration = 0.55}
+		if currentScene and currentScene.jumpToLevel then
+			currentScene:jumpToLevel(index, levels)
         else
             game.scenes:switch("playing", index)
         end

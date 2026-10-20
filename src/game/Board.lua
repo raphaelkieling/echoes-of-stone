@@ -1,4 +1,4 @@
-local Class = require("src.core.Class")
+local Node = require("src.core.Node")
 local GameObject = require("src.core.GameObject")
 local Transform = require("src.components.Transform")
 local Animation = require("src.components.Animation")
@@ -8,9 +8,10 @@ local Box = require("src.components.Box")
 local Shake = require("src.components.Shake")
 local CharacterFactory = require("src.characters.CharacterFactory")
 
-local Board = Class:extend()
+local Board = Node:extend()
 
 function Board:init(assets, width, height)
+    Node.init(self, "Board")
     self.assets = assets
     self.width = width
     self.height = height
@@ -71,6 +72,7 @@ function Board:addObject(object)
         object:addComponent(Shake())
     end
     self.objects[#self.objects + 1] = object
+    self:addChild(object)
     if object:hasComponent("Player") then
         self.players[#self.players + 1] = object
     elseif object:hasComponent("Box") then
@@ -122,12 +124,13 @@ function Board:isMoving()
 end
 
 function Board:update(dt)
-    for _, object in ipairs(self.objects) do
-        object:update(dt)
-    end
+    self:updateChildren(dt)
 end
 
 function Board:draw(activePlayer)
+    if activePlayer and type(activePlayer.currentPlayer) == "function" then
+        activePlayer = activePlayer:currentPlayer()
+    end
     if self.tiledMap then
         for _, tile in ipairs(self.renderTiles) do
             love.graphics.draw(self.assets.tiles, tile.quad,
