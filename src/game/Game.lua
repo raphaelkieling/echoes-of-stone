@@ -12,6 +12,7 @@ local AudioManager = require("src.audio.AudioManager")
 local EventEmitter = require("src.core.EventEmitter")
 local JsonLogger = require("src.core.JsonLogger")
 local GameConfig = require("src.settings.GameConfig")
+local LevelProgress = require("src.game.LevelProgress")
 
 local Game = {}
 Game.__index = Game
@@ -27,7 +28,8 @@ function Game.new()
     self.audio = AudioManager.new()
     self.scenes = SceneManager(self)
     self.crt = CRT()
-    self.completedLevels = {}
+    self.levelProgress = LevelProgress.new()
+    self.completedLevels = self.levelProgress.completedLevels
     if BuildConfig.developmentMode then
         local Console = require("src.dev.Console")
         local ConsoleCommands = require("src.dev.ConsoleCommands")

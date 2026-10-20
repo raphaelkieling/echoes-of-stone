@@ -167,7 +167,7 @@ function PlayingScene:jumpToLevel(index, levels)
 end
 
 function PlayingScene:completeLevel()
-    self.game.completedLevels[self.levelPath] = true
+    self.game.levelProgress:markCompleted(self.levelPath)
 	self.game.events:emit("level.completed", {level = self.levelPath, index = self.levelIndex})
     if self.levelIndex < #self.levels then
         self.states:change("transitioning")

@@ -37,6 +37,23 @@ function LevelSelect:draw()
         local number = string.format("%02d", index)
         love.graphics.print((index == self.selected and "> " or "  ") .. number .. "  /  " .. label,
             panelX + 32 * scale, y)
+
+        local markerX = panelX + panelWidth - 34 * scale
+        local markerY = y + 15 * scale
+        local markerRadius = 8 * scale
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.circle("fill", markerX, markerY, markerRadius + 2 * scale)
+        if self.game.levelProgress:isCompleted(level.path) then
+            UI.setColor("accent")
+            love.graphics.circle("fill", markerX, markerY, markerRadius)
+            UI.setColor("text")
+            love.graphics.setLineWidth(2 * scale)
+            love.graphics.circle("line", markerX, markerY, markerRadius)
+        else
+            UI.setColor("text", index == self.selected and 1 or 0.7)
+            love.graphics.setLineWidth(2 * scale)
+            love.graphics.circle("line", markerX, markerY, markerRadius)
+        end
     end
     self:drawChildren(nil, self)
 end
