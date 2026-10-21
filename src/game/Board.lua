@@ -11,6 +11,7 @@ local Grass = require("src.components.Grass")
 local Flameable = require("src.components.Flameable")
 local FlameSource = require("src.components.FlameSource")
 local Shake = require("src.components.Shake")
+local Sinkable = require("src.components.Sinkable")
 local CharacterFactory = require("src.characters.CharacterFactory")
 
 local DEBUG_CELL_SIZE = 64
@@ -45,12 +46,19 @@ function Board:setCell(x, y, cell)
     self.cells[self:cellKey(x, y)] = cell
 end
 
-function Board:addMapTile(x, y, tileId)
+
+function Board:addMapTile(x, y, tileset, tileId)
+	local image, quad, tileWidth, tileHeight = self.assets:mapTile(tileset, tileId)
     self.renderTiles[#self.renderTiles + 1] = {
         x = x,
         y = y,
         tileId = tileId,
-        quad = self.assets:tileQuad(tileId),
+        image = image,
+        quad = quad,
+		scaleX = 64 / tileWidth,
+		scaleY = 64 / tileHeight,
+		tileWidth = tileWidth,
+		tileHeight = tileHeight,
     }
 end
 
@@ -158,6 +166,7 @@ function Board:spawnBox(x, y, tileId)
     object:addComponent(Transform(x, y, 64, 2))
     object:addComponent(InteractiveObject())
     object:addComponent(Box())
+    object:addComponent(Sinkable())
     object:addComponent(Animation(self.assets:tileAnimation(tileX, tileY)))
     object:addComponent(self.assets:tileRenderer(2, 2))
     return self:addObject(object)
@@ -165,7 +174,7 @@ end
 
 function Board:getInteractiveAt(x, y, positions, except)
     for _, object in ipairs(self.objects) do
-        if object ~= except and object:hasComponent("InteractiveObject") then
+        if object.active ~= false and object ~= except and object:hasComponent("InteractiveObject") then
             local position = positions and positions[object]
             if not position then
                 local transform = object:getComponent("Transform")
@@ -181,7 +190,7 @@ end
 
 function Board:isMoving()
     for _, object in ipairs(self.objects) do
-        if object:getComponent("Transform"):isMoving() then
+        if object.active ~= false and object:getComponent("Transform"):isMoving() then
             return true
         end
     end
@@ -191,7 +200,7 @@ end
 function Board:isBoxAt(x, y)
     for _, box in ipairs(self.boxes) do
         local transform = box:getComponent("Transform")
-        if transform.gridX == x and transform.gridY == y then
+        if box.active ~= false and transform.gridX == x and transform.gridY == y then
             return true
         end
     end
@@ -209,8 +218,9 @@ function Board:draw(activePlayer)
     end
     if self.tiledMap then
         for _, tile in ipairs(self.renderTiles) do
-            love.graphics.draw(self.assets.tiles, tile.quad,
-                (tile.x + 0.5) * 64, (tile.y + 0.5) * 64, 0, 2, 2, 16, 16)
+            love.graphics.draw(tile.image, tile.quad,
+                (tile.x + 0.5) * 64, (tile.y + 0.5) * 64, 0,
+				tile.scaleX, tile.scaleY, tile.tileWidth / 2, tile.tileHeight / 2)
         end
     else
         local floorQuad = self.assets.tileGrid(1, 1)[1]
@@ -254,7 +264,7 @@ function Board:draw(activePlayer)
 
     local drawOrder = {}
     for _, object in ipairs(self.objects) do
-        drawOrder[#drawOrder + 1] = object
+        if object.active ~= false then drawOrder[#drawOrder + 1] = object end
     end
     for _, object in ipairs(self.targetObjects) do
         drawOrder[#drawOrder + 1] = object
@@ -333,8 +343,10 @@ function Board:allTargetsCovered()
 
     local occupiedPositions = {}
     for _, box in ipairs(self.boxes) do
-        local transform = box:getComponent("Transform")
-        occupiedPositions[self:cellKey(transform.gridX, transform.gridY)] = true
+        if box.active ~= false then
+			local transform = box:getComponent("Transform")
+			occupiedPositions[self:cellKey(transform.gridX, transform.gridY)] = true
+		end
     end
 
     for _, target in ipairs(self.targets) do

@@ -64,6 +64,7 @@ end
 function Grass:updateWalkability()
 	local cell = self.board:getCell(self.x, self.y)
 	if not cell then return end
+	cell.terrainKind = self.state == "tall" and "tall_grass" or "grass"
 	cell.walkable = self.state == "grass" and self.walkableWhenShort and not cell.wall or false
 end
 

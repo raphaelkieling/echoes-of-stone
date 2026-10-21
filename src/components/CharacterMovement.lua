@@ -52,7 +52,7 @@ function CharacterMovement:move(board, direction, history, effectSink)
 	}
 	local characterClass = actor:getComponent("CharacterClass")
 	if not movement:canWalk(destination.x, destination.y)
-		and not characterClass:canEnterBlockedTile(movement, destination) then
+		and not characterClass:canEnterBlockedTile(movement, destination, direction, actor) then
 		return false
 	end
 	characterClass:move(movement, actor, direction, destination)

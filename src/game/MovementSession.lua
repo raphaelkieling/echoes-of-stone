@@ -11,7 +11,7 @@ function MovementSession.new(board)
     }, MovementSession)
 
     for _, object in ipairs(board.objects) do
-        if object:hasComponent("InteractiveObject") then
+        if object.active ~= false and object:hasComponent("InteractiveObject") then
             local transform = object:getComponent("Transform")
             self.positions[object] = {x = transform.gridX, y = transform.gridY}
         end
@@ -26,7 +26,7 @@ end
 function MovementSession:componentAt(x, y, componentName)
     for _, object in ipairs(self.board.objects) do
         local transform = object:getComponent("Transform")
-        if transform.gridX == x and transform.gridY == y then
+        if object.active ~= false and transform.gridX == x and transform.gridY == y then
             local component = object:getComponent(componentName)
             if component then return component end
         end
@@ -58,6 +58,13 @@ function MovementSession:objectAt(x, y, except)
 end
 
 function MovementSession:moveObject(object, x, y)
+	local cell = self.board:getCell(x, y)
+	local sinkable = object:getComponent("Sinkable")
+	if cell and cell.water and sinkable then
+		self:setComponentState(sinkable, "sunk")
+		self.positions[object] = nil
+		return
+	end
     self.positions[object] = {x = x, y = y}
 end
 
@@ -80,7 +87,11 @@ end
 
 function MovementSession:findInRay(startX, startY, direction, actor)
     local x, y = startX, startY
-    while self:canWalk(x, y) do
+    while true do
+        local cell = self.board:getCell(x, y)
+        if not cell or cell.wall or (not cell.walkable and not cell.water) then
+			return nil
+		end
         local target = self:objectAt(x, y, actor)
         if target then return target end
         x, y = x + direction.x, y + direction.y
@@ -102,12 +113,21 @@ function MovementSession:pushChain(actor, destination, direction, maxDistance)
         x, y = x + direction.x, y + direction.y
     end
 
-    local last = self:position(chain[#chain])
+    local lastObject = chain[#chain]
+	local last = self:position(lastObject)
     local distance = 0
-    while self:canWalk(last.x + direction.x * (distance + 1),
-        last.y + direction.y * (distance + 1))
-        and not self:objectAt(last.x + direction.x * (distance + 1),
-            last.y + direction.y * (distance + 1), actor) do
+	while true do
+		local nextX = last.x + direction.x * (distance + 1)
+		local nextY = last.y + direction.y * (distance + 1)
+		local nextCell = self.board:getCell(nextX, nextY)
+		if nextCell and nextCell.water and lastObject:hasComponent("Sinkable") then
+			distance = distance + 1
+			break
+		end
+		if not self:canWalk(nextX, nextY)
+			or self:objectAt(nextX, nextY, actor) then
+			break
+		end
         distance = distance + 1
     end
     if maxDistance then distance = math.min(distance, maxDistance) end

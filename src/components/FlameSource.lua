@@ -32,7 +32,7 @@ function FlameSource:update(_dt)
 
 	for _, target in ipairs(board.objects) do
 		local flameable = target:getComponent("Flameable")
-		if flameable and self:canReach(target) then
+		if target.active ~= false and flameable and self:canReach(target) then
 			local component, previousState = flameable:burn(self.owner)
 			if component and board.events then
 				local objectIndex

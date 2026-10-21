@@ -10,6 +10,7 @@ local StateMachine = require("src.components.StateMachine")
 local CharacterClasses = require("src.characters.Classes")
 local PlayerStates = require("src.characters.PlayerStates")
 local Box = require("src.components.Box")
+local Sinkable = require("src.components.Sinkable")
 local Shake = require("src.components.Shake")
 local ActionHistory = require("src.game.ActionHistory")
 local SpriteRenderer = require("src.components.SpriteRenderer")
@@ -54,6 +55,7 @@ local function spawnBox(board, x, y)
     box:addComponent(Transform(x, y, 64, 2))
     box:addComponent(InteractiveObject())
     box:addComponent(Box())
+    box:addComponent(Sinkable())
     board:addObject(box)
     return box
 end
@@ -81,8 +83,8 @@ local function assertPosition(object, x, y)
         string.format("expected (%d,%d), got (%d,%d)", x, y, actualX, actualY))
 end
 
-local function run(board, player, direction)
-    return player:getComponent("CharacterMovement"):move(board, direction, ActionHistory())
+local function run(board, player, direction, history)
+	return player:getComponent("CharacterMovement"):move(board, direction, history or ActionHistory())
 end
 
 function tests.dwarf_walks_one_tile()
@@ -321,6 +323,30 @@ function tests.wizard_swaps_with_first_object_in_ray()
     assertPosition(box, 1, 0)
 end
 
+function tests.wizard_can_swap_across_water_in_both_directions()
+	local function makeRiverBoard()
+		local board = makeBoard(0, 8, 0)
+		for x = 3, 5 do
+			board:setCell(x, 0, {walkable = false, wall = false, water = true})
+		end
+		return board
+	end
+
+	local rightwardBoard = makeRiverBoard()
+	local leftBankWizard = spawnPlayer(rightwardBoard, 2, 0, Player.Classes.WIZARD)
+	local rightBankBox = spawnBox(rightwardBoard, 6, 0)
+	assert(run(rightwardBoard, leftBankWizard, {x = 1, y = 0}))
+	assertPosition(leftBankWizard, 6, 0)
+	assertPosition(rightBankBox, 2, 0)
+
+	local leftwardBoard = makeRiverBoard()
+	local rightBankWizard = spawnPlayer(leftwardBoard, 6, 0, Player.Classes.WIZARD)
+	local leftBankBox = spawnBox(leftwardBoard, 2, 0)
+	assert(run(leftwardBoard, rightBankWizard, {x = -1, y = 0}))
+	assertPosition(rightBankWizard, 2, 0)
+	assertPosition(leftBankBox, 6, 0)
+end
+
 function tests.player_can_change_class_and_use_the_new_ability()
     local board = makeBoard(0, 6, 0)
     local player = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
@@ -384,6 +410,25 @@ function tests.warrior_stops_the_chain_before_another_object()
     assertPosition(warrior, 2, 0)
     assertPosition(first, 3, 0)
     assertPosition(blocker, 4, 0)
+end
+
+function tests.warrior_sinks_a_box_in_water_instead_of_throwing_it_across_the_river()
+	local board = makeBoard(0, 5, 0)
+	board:setCell(3, 0, {walkable = false, wall = false, water = true})
+	local warrior = spawnPlayer(board, 1, 0, Player.Classes.WARRIOR)
+	local box = spawnBox(board, 2, 0)
+	local history = ActionHistory()
+
+	assert(run(board, warrior, {x = 1, y = 0}, history))
+	assert(box:getComponent("Sinkable").state == "sunk")
+	assert(box.active == false, "a box pushed into water should sink out of the board")
+	assertPosition(warrior, 2, 0)
+	assert(not board:isBoxAt(4, 0), "the box must not be propelled through the water")
+
+	assert(history:undo())
+	assert(box.active == true and box:getComponent("Sinkable").state == "active",
+		"undo should restore a box sunk into water")
+	assertPosition(box, 2, 0)
 end
 
 function tests.telekinetic_pushes_the_first_object_one_cell()

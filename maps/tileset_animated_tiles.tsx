@@ -9,4 +9,9 @@
    <property name="kind" value="bonfire"/>
   </properties>
  </tile>
+ <tile id="110">
+  <properties>
+   <property name="kind" value="water"/>
+  </properties>
+ </tile>
 </tileset>

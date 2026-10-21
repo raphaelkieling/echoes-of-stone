@@ -21,6 +21,7 @@ function Assets.new()
         tiles = tiles,
         players = players,
         tilesetImages = {},
+        tilesetQuads = {},
         tileGrid = anim8.newGrid(32, 32, tiles:getWidth(), tiles:getHeight()),
         playerGrid = anim8.newGrid(32, 32, players:getWidth(), players:getHeight()),
         tileColumns = tiles:getWidth() / 32,
@@ -72,6 +73,28 @@ function Assets:tileQuad(tileId)
     local column = tileId % self.tileColumns
     local row = math.floor(tileId / self.tileColumns)
     return self.tileGrid(column + 1, row + 1)[1]
+end
+
+function Assets:mapTile(tileset, tileId)
+	local image = self:tilesetImage(tileset)
+	local tileWidth = tileset.tilewidth or 32
+	local tileHeight = tileset.tileheight or 32
+	local columns = tileset.columns or math.floor(image:getWidth() / tileWidth)
+	local margin = tileset.margin or 0
+	local spacing = tileset.spacing or 0
+	local x = tileId % columns
+	local y = math.floor(tileId / columns)
+	local cacheKey = table.concat({tileset.image or tileset.imagePath, tileWidth,
+		tileHeight, margin, spacing, tileId}, ":")
+	local quad = self.tilesetQuads[cacheKey]
+	if not quad then
+		quad = love.graphics.newQuad(
+			margin + x * (tileWidth + spacing),
+			margin + y * (tileHeight + spacing),
+			tileWidth, tileHeight, image:getWidth(), image:getHeight())
+		self.tilesetQuads[cacheKey] = quad
+	end
+	return image, quad, tileWidth, tileHeight
 end
 
 function Assets:playerRenderer(scale, layer)

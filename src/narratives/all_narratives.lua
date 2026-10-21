@@ -8,7 +8,6 @@ Catalog.register("altar_discovery", {
     },
 })
 
-
 Catalog.register("tutorial_undo", {
     steps = {
         { type = "dialogue", speaker = "", text = "Seems that you can undo things pressing K" },

@@ -1,4 +1,5 @@
 local SoundCatalog = require("src.audio.SoundCatalog")
+local AudioConfig = require("src.settings.AudioConfig")
 
 local AudioManager = {}
 AudioManager.__index = AudioManager
@@ -55,17 +56,54 @@ local function createSource(definition)
 end
 
 function AudioManager.new(catalog)
-    local self = setmetatable({sources = {}}, AudioManager)
+    local self = setmetatable({
+        sources = {},
+        volume = math.max(0, math.min(1, AudioConfig.volume)),
+        muted = AudioConfig.muted == true,
+    }, AudioManager)
     for name, definition in pairs(catalog or SoundCatalog) do
         local source = createSource(definition)
-        source:setVolume(definition.volume or 1)
-        self.sources[name] = {source}
+        local baseVolume = definition.volume or 1
+        source:setVolume(baseVolume * self:_effectiveVolume())
+        self.sources[name] = {source = {source}, baseVolume = baseVolume}
     end
     return self
 end
 
+function AudioManager:_effectiveVolume()
+    return self.muted and 0 or self.volume
+end
+
+function AudioManager:_applyVolume(pool)
+    local volume = pool.baseVolume * self:_effectiveVolume()
+    for _, source in ipairs(pool.sources) do source:setVolume(volume) end
+end
+
+function AudioManager:getVolume()
+    return self.volume
+end
+
+function AudioManager:setVolume(volume)
+    self.volume = math.max(0, math.min(1, tonumber(volume) or self.volume))
+    for _, pool in pairs(self.sources) do self:_applyVolume(pool) end
+end
+
+function AudioManager:isMuted()
+    return self.muted
+end
+
+function AudioManager:setMuted(muted)
+    self.muted = muted == true
+    for _, pool in pairs(self.sources) do self:_applyVolume(pool) end
+end
+
+function AudioManager:toggleMuted()
+    self:setMuted(not self.muted)
+end
+
 function AudioManager:play(name)
-    local pool = self.sources[name]
+    local entry = self.sources[name]
+    local pool = entry and entry.sources
     if not pool then return false end
 
     for _, source in ipairs(pool) do
@@ -76,6 +114,7 @@ function AudioManager:play(name)
     end
 
     local source = pool[1]:clone()
+    source:setVolume(entry.baseVolume * self:_effectiveVolume())
     pool[#pool + 1] = source
     source:play()
     return true

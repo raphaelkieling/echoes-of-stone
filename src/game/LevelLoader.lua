@@ -156,6 +156,8 @@ local function parseTsxTileset(sourcePath, firstgid)
 			or (imageWidth and imageHeight and tileWidth and tileHeight
 				and math.floor(imageWidth / tileWidth) * math.floor(imageHeight / tileHeight)),
 		columns = columns or (imageWidth and tileWidth and math.floor(imageWidth / tileWidth)),
+		margin = tonumber(attributes.margin) or 0,
+		spacing = tonumber(attributes.spacing) or 0,
 		objectalignment = attributes.objectalignment,
 		image = image.source and resolveRelativePath(sourcePath, image.source),
 		imagewidth = imageWidth,
@@ -302,15 +304,23 @@ local function loadTiled(path, assets, events)
                     assert(tileset, string.format("tile GID %d in layer %s has no tileset in %s", gid, layer.name, path))
                     local tileMetadata = metadata[gid]
                     local properties = tileMetadata and tileMetadata.properties or {}
-                    local kind = properties.kind
-                    local cell = board:getCell(x, y) or {walkable = false, wall = false, target = false}
+                    local kind = type(properties.kind) == "string"
+						and properties.kind:lower() or nil
+                    local cell = board:getCell(x, y) or {walkable = true, wall = false, target = false}
 
-                    if layer.name == "Ground" and not properties.solid then
-                        cell.walkable = true
-                    end
-                    if properties.solid then
+                    if kind == "solid" or properties.solid then
                         cell.walkable = false
                         cell.wall = true
+						cell.terrainKind = "solid"
+					elseif kind == "water" then
+						cell.walkable = false
+						cell.water = true
+						cell.terrainKind = "water"
+					elseif kind == "grass" or kind == "tall_grass" then
+						cell.terrainKind = kind
+					elseif not cell.wall and not cell.water then
+						-- Visual overlays must not undo an explicit terrain rule from another layer.
+						if not cell.terrainKind then cell.walkable = true end
                     end
                     board:setCell(x, y, cell)
 
@@ -323,15 +333,18 @@ local function loadTiled(path, assets, events)
                             x = x, y = y, kind = kind,
                             tileId = tileMetadata and tileMetadata.id or (gid - tileset.firstgid),
                         }
-                    elseif kind == "player" or isRoguesTileset(tileset) then
-                        local classId = properties.characterClass or classForRogueTile(tileset, gid)
+                    elseif kind == "player" or (isRoguesTileset(tileset)
+						and classForRogueTile(tileset, gid)) then
+						local inferredClass = classForRogueTile(tileset, gid)
+						local classId = properties.characterClass or inferredClass
                         assert(classId, string.format(
                             "player tile in %s does not match a configured character sprite (tile %d)",
                             path, gid - tileset.firstgid))
                         assert(board:canWalk(x, y), "player must be placed on walkable ground in " .. path)
                         board:spawnPlayer(classId, x, y)
                     elseif kind ~= "player" then
-                        board:addMapTile(x, y, tileMetadata and tileMetadata.id or (gid - tileset.firstgid))
+                        board:addMapTile(x, y, tileset,
+							tileMetadata and tileMetadata.id or (gid - tileset.firstgid))
                     end
                 end
             end

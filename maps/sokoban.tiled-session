@@ -13,14 +13,28 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 311.25,
-                "y": 183.5
+                "x": 313.25,
+                "y": 179.5
             }
         },
         "level-farmer-tutorial.tmj#rogues": {
             "scaleInDock": 1
         },
         "level-farmer-tutorial.tmj#tiles": {
+            "scaleInDock": 1
+        },
+        "level-fire-tutorial.tmj": {
+            "scale": 1.5,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 309,
+                "y": 141.33333333333331
+            }
+        },
+        "level-fire-tutorial.tmj#rogues": {
+            "scaleInDock": 1
+        },
+        "level-fire-tutorial.tmj#tiles": {
             "scaleInDock": 1
         },
         "level-tutorial-undo.tmj": {
@@ -30,16 +44,16 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 320,
-                "y": 320.25
+                "x": 320.25,
+                "y": 320.5
             }
         },
         "level-wizard-many-boxes.tmj": {
             "scale": 3,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 231.83333333333331,
-                "y": 193.66666666666669
+                "x": 320,
+                "y": 320.16666666666663
             }
         },
         "level-wizard-many-boxes.tmj#rogues": {
@@ -93,8 +107,8 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 271.25,
-                "y": 272.5
+                "x": 320,
+                "y": 320.25
             }
         },
         "level1.tmj#tiles": {
@@ -122,8 +136,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 274.25,
-                "y": 268.5
+                "x": 320,
+                "y": 320.25
             }
         },
         "level2.tmj#tiles": {
@@ -136,8 +150,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 201.25,
-                "y": 217
+                "x": 320,
+                "y": 320.25
             }
         },
         "level3.tmj#tiles": {
@@ -147,8 +161,8 @@
             "scale": 0.9866,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 319.7851206162578,
-                "y": 320.2919116156497
+                "x": 320.29191161564967,
+                "y": 319.7851206162578
             }
         },
         "level4.tmj#rogues": {
@@ -161,8 +175,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 320.25,
-                "y": 320
+                "x": 320,
+                "y": 320.25
             }
         },
         "level5.tmj#rogues": {
@@ -175,8 +189,8 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 270.25,
-                "y": 254.5
+                "x": 320,
+                "y": 320.25
             }
         },
         "level6.tmj#rogues": {
@@ -192,8 +206,8 @@
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 362.3333333333333,
-                "y": 225.99999999999997
+                "x": 320,
+                "y": 320.33333333333337
             }
         },
         "level_playground.tmj#rogues": {
@@ -234,6 +248,9 @@
     "project": "sokoban.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "level-fire-tutorial.tmj",
+        "tileset_animated_tiles.tsx",
+        "tileset_map_01.tsx",
         "level0.tmj",
         "level1.tmj",
         "level2.tmj",
@@ -242,10 +259,7 @@
         "level4.tmj",
         "level5.tmj",
         "level6.tmj",
-        "tileset_characters.tsx",
-        "level-tutorial-undo.tmj",
-        "level-wizard-many-boxes.tmj",
-        "level-farmer-tutorial.tmj"
+        "tileset_characters.tsx"
     ],
     "tileset.embedInMap": false,
     "tileset.lastUsedFormat": "tsx"

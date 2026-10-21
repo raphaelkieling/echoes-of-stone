@@ -86,4 +86,9 @@
    <property name="kind" value="tall_grass"/>
   </properties>
  </tile>
+ <tile id="428">
+  <properties>
+   <property name="solid" type="bool" value="true"/>
+  </properties>
+ </tile>
 </tileset>

@@ -124,6 +124,44 @@ function tests.lit_bonfire_burns_grass_and_undo_restores_it_when_pushed()
 	assert(not board:canWalk(3, 0))
 end
 
+function tests.lit_bonfire_burns_flameable_grass_after_being_moved_by_a_wizard_swap()
+	local board = Board({
+		bonfireAnimation = function(_, _, state)
+			return {state = state, update = function() end}
+		end,
+		tileAnimation = function()
+			return {update = function() end}
+		end,
+		tileRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+		tilesetRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+	}, 6, 1)
+	for x = 0, 4 do board:setCell(x, 0, {walkable = true, wall = false}) end
+	board:setCell(5, 0, {walkable = true, wall = false})
+	local grass = board:addGrass(0, 0, "tall_grass")
+	local fire = board:addBonfire(4, 0, {}, "lit")
+	local wizard = GameObject("Wizard")
+	wizard:addComponent(Transform(1, 0, 64, 3))
+	wizard:addComponent(InteractiveObject())
+	wizard:addComponent(Player())
+	wizard:addComponent(CharacterClasses.create(Player.Classes.WIZARD))
+	wizard:addComponent(CharacterMovement())
+	board:addObject(wizard)
+
+	local moved = wizard:getComponent("CharacterMovement"):move(
+		board, {x = 1, y = 0}, ActionHistory())
+	assert(moved)
+	assert(fire:getComponent("Transform").gridX == 1,
+		"wizard swap should move the bonfire next to the grass tile")
+	board:update(0)
+
+	assert(grass:getComponent("Grass").state == "grass",
+		"an active flame should burn any Flameable object it moves onto")
+end
+
 function tests.undo_reverses_farmer_and_fire_state_changes_in_reverse_order()
 	local assets = {
 		bonfireAnimation = function(_, _, state)
