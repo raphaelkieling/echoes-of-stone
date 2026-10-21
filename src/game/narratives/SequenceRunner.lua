@@ -22,6 +22,8 @@ function SequenceRunner:init(events, catalog, callbacks)
 end
 
 function SequenceRunner:onDetach()
+	local action = self.active and self.active.action
+	if action and action.onExit then action:onExit() end
 	self.events:off(self.subscription)
 	self.subscription = nil
 end
@@ -36,6 +38,9 @@ function SequenceRunner:queueNarrative(payload)
 	for index, step in ipairs(narrative.steps) do
 		local invalid = not ACTIONS[step.type]
 		if step.type == "dialogue" and type(step.text) ~= "string" then invalid = true end
+		if step.type == "dialogue" and step.voice ~= nil and type(step.voice) ~= "string" then
+			invalid = true
+		end
 		if step.type == "wait" and step.duration ~= nil and type(step.duration) ~= "number" then
 			invalid = true
 		end
@@ -73,6 +78,8 @@ end
 
 function SequenceRunner:advanceStep()
 	if not self.active then return end
+	local previousAction = self.active.action
+	if previousAction and previousAction.onExit then previousAction:onExit() end
 	self.active.stepIndex = self.active.stepIndex + 1
 	local definition = self.active.narrative.steps[self.active.stepIndex]
 	if not definition then
@@ -81,7 +88,7 @@ function SequenceRunner:advanceStep()
 	end
 	local Action = ACTIONS[definition.type]
 	assert(Action, "unknown narrative action: " .. tostring(definition.type))
-	self.active.action = Action(definition)
+	self.active.action = Action(definition, {audio = self.callbacks.audio})
 end
 
 function SequenceRunner:update(dt)
@@ -119,6 +126,8 @@ end
 function SequenceRunner:finish()
 	local completed = self.active
 	if not completed then return end
+	local action = completed.action
+	if action and action.onExit then action:onExit() end
 	self.active = nil
 	self.events:emit("narrative.completed", {id = completed.narrative.id})
 	if completed.blocking and self.callbacks.onBlockingFinished then

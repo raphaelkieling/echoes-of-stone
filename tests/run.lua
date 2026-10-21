@@ -8,6 +8,9 @@ local suites = {
     {name = "bonfire_component", tests = require("tests.bonfire_component")},
     {name = "level_loader_tiles", tests = require("tests.level_loader_tiles")},
     {name = "level_progress", tests = require("tests.level_progress")},
+    {name = "console_commands", tests = require("tests.console_commands")},
+    {name = "audio_manager", tests = require("tests.audio_manager")},
+    {name = "narrative_voice", tests = require("tests.narrative_voice")},
 }
 local passed, failed = 0, 0
 

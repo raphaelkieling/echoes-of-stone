@@ -59,6 +59,13 @@ function ConsoleCommands.register(console)
 		return "Level state JSON copied (" .. #encoded .. " characters)."
 	end)
 
+	console:registerToggleCommand("muted", "mute or unmute game audio", function(context, enabled)
+		local audio = context and context.game and context.game.audio
+		if not audio then return "Audio is unavailable." end
+		audio:setMuted(enabled)
+		return "Audio " .. (enabled and "muted" or "unmuted") .. "."
+	end)
+
 	console:registerToggleCommand("show-undo-history", "show player paths for each undo", function(context, enabled)
 		local board = context and context.board
 		if board then board.debugShowUndoHistory = enabled end

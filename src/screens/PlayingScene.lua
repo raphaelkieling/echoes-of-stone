@@ -73,6 +73,7 @@ function PlayingScene:init(game)
 	self.pauseSelection = 1
 	self.states = StateMachine(self, PlayingStates)
 	self.narratives = self:addChild(SequenceRunner(self.game.events, NarrativeCatalog.load(), {
+		audio = self.game.audio,
 		onBlockingStarted = function(narrative) self:onNarrativeStarted(narrative) end,
 		onBlockingFinished = function(narrative) self:onNarrativeFinished(narrative) end,
 	}))

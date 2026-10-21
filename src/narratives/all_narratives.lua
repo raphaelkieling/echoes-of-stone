@@ -8,6 +8,18 @@ Catalog.register("altar_discovery", {
     },
 })
 
+Catalog.register("first_dwarf_tutorial", {
+    steps = {
+        {
+            type = "dialogue",
+            speaker = "Dwarf",
+            text = "Ah, so this is the famous crypt? Expected to find the rest of the lot here... I bloody need a good pint hahahah!",
+            voice = "assets/voices/01_initial_dawarf_tutorial.mp3"
+        },
+    },
+})
+
+
 Catalog.register("tutorial_undo", {
     steps = {
         { type = "dialogue", speaker = "", text = "Seems that you can undo things pressing K" },

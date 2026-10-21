@@ -58,6 +58,7 @@ end
 function AudioManager.new(catalog)
     local self = setmetatable({
         sources = {},
+        voiceSource = nil,
         volume = math.max(0, math.min(1, AudioConfig.volume)),
         muted = AudioConfig.muted == true,
     }, AudioManager)
@@ -65,7 +66,7 @@ function AudioManager.new(catalog)
         local source = createSource(definition)
         local baseVolume = definition.volume or 1
         source:setVolume(baseVolume * self:_effectiveVolume())
-        self.sources[name] = {source = {source}, baseVolume = baseVolume}
+        self.sources[name] = {sources = {source}, baseVolume = baseVolume}
     end
     return self
 end
@@ -79,6 +80,10 @@ function AudioManager:_applyVolume(pool)
     for _, source in ipairs(pool.sources) do source:setVolume(volume) end
 end
 
+function AudioManager:_applyVoiceVolume()
+	if self.voiceSource then self.voiceSource:setVolume(self:_effectiveVolume()) end
+end
+
 function AudioManager:getVolume()
     return self.volume
 end
@@ -86,6 +91,7 @@ end
 function AudioManager:setVolume(volume)
     self.volume = math.max(0, math.min(1, tonumber(volume) or self.volume))
     for _, pool in pairs(self.sources) do self:_applyVolume(pool) end
+	self:_applyVoiceVolume()
 end
 
 function AudioManager:isMuted()
@@ -95,6 +101,7 @@ end
 function AudioManager:setMuted(muted)
     self.muted = muted == true
     for _, pool in pairs(self.sources) do self:_applyVolume(pool) end
+	self:_applyVoiceVolume()
 end
 
 function AudioManager:toggleMuted()
@@ -118,6 +125,30 @@ function AudioManager:play(name)
     pool[#pool + 1] = source
     source:play()
     return true
+end
+
+function AudioManager:stopVoice()
+	if not self.voiceSource then return false end
+	self.voiceSource:stop()
+	self.voiceSource = nil
+	return true
+end
+
+function AudioManager:playVoice(path)
+	if type(path) ~= "string" or path == "" then
+		return false, "voice path must be a non-empty string"
+	end
+	self:stopVoice()
+	local created, source = pcall(love.audio.newSource, path, "stream")
+	if not created then return false, source end
+	source:setVolume(self:_effectiveVolume())
+	local played, playError = pcall(source.play, source)
+	if not played then
+		source:stop()
+		return false, playError
+	end
+	self.voiceSource = source
+	return true
 end
 
 return AudioManager
