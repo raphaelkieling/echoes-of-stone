@@ -50,12 +50,15 @@ function CharacterMovement:move(board, direction, history, effectSink)
 		x = actorPosition.x + direction.x,
 		y = actorPosition.y + direction.y,
 	}
-	if not movement:canWalk(destination.x, destination.y) then return false end
-
 	local characterClass = actor:getComponent("CharacterClass")
+	if not movement:canWalk(destination.x, destination.y)
+		and not characterClass:canEnterBlockedTile(movement, destination) then
+		return false
+	end
 	characterClass:move(movement, actor, direction, destination)
 	local changes = movement:changedPositions()
-	if #changes == 0 then
+	local componentChanges = movement:changedComponents()
+	if #changes == 0 and #componentChanges == 0 then
 		shakeBlockedObjects(movement, direction)
 		return false
 	end
@@ -71,15 +74,20 @@ function CharacterMovement:move(board, direction, history, effectSink)
 			y = change.y,
 		}
 	end
+	for _, change in ipairs(componentChanges) do
+		snapshots[#snapshots + 1] = change
+	end
 	if history then history:record(snapshots) end
-	startPlayerStates(changes, actor)
-	local stateMachine = actor:getComponent("StateMachine")
-	if stateMachine then
-		stateMachine:dispatch("onMovement", {
-			effects = effectSink or actor:getComponent("MovementEffects"),
-			changes = changes,
-			direction = direction,
-		})
+	if #changes > 0 then
+		startPlayerStates(changes, actor)
+		local stateMachine = actor:getComponent("StateMachine")
+		if stateMachine then
+			stateMachine:dispatch("onMovement", {
+				effects = effectSink or actor:getComponent("MovementEffects"),
+				changes = changes,
+				direction = direction,
+			})
+		end
 	end
 	return true, changes
 end

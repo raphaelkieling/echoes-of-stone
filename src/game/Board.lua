@@ -7,6 +7,7 @@ local Player = require("src.components.Player")
 local Box = require("src.components.Box")
 local Target = require("src.components.Target")
 local Bonfire = require("src.components.Bonfire")
+local Grass = require("src.components.Grass")
 local Shake = require("src.components.Shake")
 local CharacterFactory = require("src.characters.CharacterFactory")
 
@@ -68,6 +69,15 @@ function Board:addBonfire(x, y, tileset, state)
     object:addComponent(InteractiveObject())
     object:addComponent(Bonfire(self.assets, tileset, state))
     object:addComponent(self.assets:tilesetRenderer(tileset, 2, 1))
+    return self:addObject(object)
+end
+
+function Board:addGrass(x, y, state)
+    local object = GameObject("Grass")
+    object:addComponent(Transform(x, y, 64, 1))
+    object:addComponent(Grass(self.assets, self, x, y,
+        state == "tall_grass" and "tall" or "grass"))
+    object:addComponent(self.assets:tileRenderer(2, 1))
     return self:addObject(object)
 end
 

@@ -15,6 +15,7 @@ local PLAYER_MARKERS = {
     ["4"] = Player.Classes.TELEKINETIC,
     ["5"] = Player.Classes.SORCERER,
     ["6"] = Player.Classes.MYSTERIOUS_PRIEST,
+    ["7"] = Player.Classes.FARMER,
 }
 
 local PLAYER_CLASS_IDS = {
@@ -24,6 +25,7 @@ local PLAYER_CLASS_IDS = {
     Player.Classes.TELEKINETIC,
     Player.Classes.SORCERER,
     Player.Classes.MYSTERIOUS_PRIEST,
+    Player.Classes.FARMER,
 }
 
 function LevelLoader.listLevels()
@@ -312,7 +314,9 @@ local function loadTiled(path, assets, events)
                     end
                     board:setCell(x, y, cell)
 
-                    if kind == "bonfire" then
+                    if kind == "grass" or kind == "tall_grass" then
+                        board:addGrass(x, y, kind)
+                    elseif kind == "bonfire" then
                         board:addBonfire(x, y, tileset, properties.state)
                     elseif kind == "box" or kind == "target" then
                         markedObjects[#markedObjects + 1] = {
@@ -375,6 +379,8 @@ local function loadTiled(path, assets, events)
                     board:spawnPlayer(classId, x, y)
                 elseif kind == "bonfire" then
                     board:addBonfire(x, y, tileset, properties.state)
+                elseif kind == "grass" or kind == "tall_grass" then
+                    board:addGrass(x, y, kind)
                 elseif kind == "box" or kind == "target" then
                     markedObjects[#markedObjects + 1] = {x = x, y = y, kind = kind}
                 end

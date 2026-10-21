@@ -12,6 +12,7 @@ local PlayerStates = require("src.characters.PlayerStates")
 local Box = require("src.components.Box")
 local Shake = require("src.components.Shake")
 local ActionHistory = require("src.game.ActionHistory")
+local SpriteRenderer = require("src.components.SpriteRenderer")
 
 local tests = {}
 
@@ -57,6 +58,18 @@ local function spawnBox(board, x, y)
     return box
 end
 
+local function spawnGrass(board, x, y, state)
+	board.assets = {
+		tileAnimation = function(_, tileX, tileY)
+			return {x = tileX, y = tileY, update = function() end}
+		end,
+		tileRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+	}
+	return board:addGrass(x, y, state or "grass")
+end
+
 local function pos(object)
     local transform = object:getComponent("Transform")
     return transform.gridX, transform.gridY
@@ -77,6 +90,78 @@ function tests.dwarf_walks_one_tile()
     local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
     assert(run(board, dwarf, {x = 1, y = 0}))
     assertPosition(dwarf, 2, 0)
+end
+
+function tests.farmer_cuts_tall_grass_without_stepping_onto_it_and_undo_restores_it()
+	local board = makeBoard(0, 4, 0)
+	local farmer = spawnPlayer(board, 1, 0, Player.Classes.FARMER)
+	local grass = spawnGrass(board, 2, 0, "tall_grass")
+	local history = ActionHistory()
+
+	assert(farmer:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, history))
+	assertPosition(farmer, 1, 0)
+	assert(grass:getComponent("Grass").state == "grass")
+	assert(board:canWalk(2, 0), "cut grass should be walkable")
+
+	assert(history:undo())
+	assertPosition(farmer, 1, 0)
+	assert(grass:getComponent("Grass").state == "tall")
+	assert(not board:canWalk(2, 0), "undo should restore the tall-grass obstacle")
+end
+
+function tests.farmer_raises_short_grass_without_stepping_onto_it_and_undo_restores_it()
+	local board = makeBoard(0, 4, 0)
+	local farmer = spawnPlayer(board, 1, 0, Player.Classes.FARMER)
+	local grass = spawnGrass(board, 2, 0, "grass")
+	local history = ActionHistory()
+
+	assert(farmer:getComponent("CharacterMovement"):move(board, {x = 1, y = 0}, history))
+	assertPosition(farmer, 1, 0)
+	assert(grass:getComponent("Grass").state == "tall")
+	assert(not board:canWalk(2, 0), "raised grass should block the tile")
+
+	assert(history:undo())
+	assert(grass:getComponent("Grass").state == "grass")
+	assert(board:canWalk(2, 0), "undo should restore passable short grass")
+end
+
+function tests.tall_grass_blocks_other_players_and_boxes()
+	local board = makeBoard(0, 4, 0)
+	local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+	local grass = spawnGrass(board, 2, 0, "tall_grass")
+	assert(not board:canWalk(2, 0))
+	assert(not run(board, dwarf, {x = 1, y = 0}))
+	assertPosition(dwarf, 1, 0)
+
+	local boxBoard = makeBoard(0, 4, 0)
+	local pusher = spawnPlayer(boxBoard, 1, 0, Player.Classes.DWARF)
+	local box = spawnBox(boxBoard, 2, 0)
+	spawnGrass(boxBoard, 3, 0, "tall_grass")
+	assert(not run(boxBoard, pusher, {x = 1, y = 0}))
+	assertPosition(pusher, 1, 0)
+	assertPosition(box, 2, 0)
+	assert(grass:getComponent("Grass").state == "tall")
+end
+
+function tests.farmer_cannot_push_a_box()
+	local board = makeBoard(0, 4, 0)
+	local farmer = spawnPlayer(board, 1, 0, Player.Classes.FARMER)
+	local box = spawnBox(board, 2, 0)
+
+	assert(not run(board, farmer, {x = 1, y = 0}))
+	assertPosition(farmer, 1, 0)
+	assertPosition(box, 2, 0)
+end
+
+function tests.grass_is_not_pushed_or_trampled_by_other_classes()
+	local board = makeBoard(0, 4, 0)
+	local dwarf = spawnPlayer(board, 1, 0, Player.Classes.DWARF)
+	local grass = spawnGrass(board, 2, 0)
+
+	assert(run(board, dwarf, {x = 1, y = 0}))
+	assertPosition(dwarf, 2, 0)
+	assert(grass:getComponent("Grass").state == "grass")
+	assertPosition(grass, 2, 0)
 end
 
 function tests.dwarf_pushes_one_box_one_tile()

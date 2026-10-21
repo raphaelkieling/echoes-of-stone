@@ -76,4 +76,14 @@
    <property name="kind" value="box"/>
   </properties>
  </tile>
+ <tile id="327">
+  <properties>
+   <property name="kind" value="grass"/>
+  </properties>
+ </tile>
+ <tile id="328">
+  <properties>
+   <property name="kind" value="tall_grass"/>
+  </properties>
+ </tile>
 </tileset>

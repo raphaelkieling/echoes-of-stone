@@ -7,6 +7,7 @@ function MovementSession.new(board)
         positions = {},
         blockedObjects = {},
         blockedObjectSet = {},
+        componentChanges = {},
     }, MovementSession)
 
     for _, object in ipairs(board.objects) do
@@ -20,6 +21,27 @@ end
 
 function MovementSession:position(object)
     return self.positions[object]
+end
+
+function MovementSession:componentAt(x, y, componentName)
+    for _, object in ipairs(self.board.objects) do
+        local transform = object:getComponent("Transform")
+        if transform.gridX == x and transform.gridY == y then
+            local component = object:getComponent(componentName)
+            if component then return component end
+        end
+    end
+end
+
+function MovementSession:setComponentState(component, state)
+    if not component or component.state == state then return false end
+    self.componentChanges[#self.componentChanges + 1] = {
+        object = component.owner,
+        component = component.componentName,
+        state = component.state,
+    }
+    component:setState(state)
+    return true
 end
 
 function MovementSession:canWalk(x, y)
@@ -123,6 +145,10 @@ function MovementSession:changedPositions()
         end
     end
     return changes
+end
+
+function MovementSession:changedComponents()
+    return self.componentChanges
 end
 
 return MovementSession

@@ -161,11 +161,11 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 1.5,
+            "scale": 0.8982,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 241.33333333333331,
-                "y": 220.33333333333334
+                "x": 269.42774437764416,
+                "y": 320.084613671788
             }
         },
         "level_playground.tmj#rogues": {
@@ -205,8 +205,8 @@
     "project": "sokoban.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "tileset_animated_tiles.tsx",
         "tileset_map_01.tsx",
+        "tileset_animated_tiles.tsx",
         "level-tutorial-undo.tmj",
         "level1-1.tmj",
         "tileset_characters.tsx",

@@ -5,6 +5,7 @@ local Classes = {
     TELEKINETIC = "telekinetic",
     SORCERER = "sorcerer",
     MYSTERIOUS_PRIEST = "mysterious_priest",
+    FARMER = "farmer",
 }
 
 local implementations = {
@@ -14,6 +15,7 @@ local implementations = {
     [Classes.TELEKINETIC] = require("src.characters.classes.Telekinetic"),
     [Classes.SORCERER] = require("src.characters.classes.Sorcerer"),
     [Classes.MYSTERIOUS_PRIEST] = require("src.characters.classes.MysteriousPriest"),
+    [Classes.FARMER] = require("src.characters.classes.Farmer"),
 }
 
 function Classes.create(classId)

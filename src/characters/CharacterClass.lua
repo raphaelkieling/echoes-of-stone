@@ -11,6 +11,10 @@ function CharacterClass:move(_movement, _actor, _direction, _destination)
     error(self.name .. " must implement its movement behavior")
 end
 
+function CharacterClass:canEnterBlockedTile(_movement, _destination)
+	return false
+end
+
 function CharacterClass:playMovementEffect(effects, actor, changes)
     for _, change in ipairs(changes) do
         if change.object == actor then

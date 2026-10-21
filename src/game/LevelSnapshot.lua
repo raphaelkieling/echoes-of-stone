@@ -33,7 +33,8 @@ local function captureObjects(scene, board)
 		local entry = {
 			index = index,
 			name = object.name,
-			kind = player and "player" or (object:hasComponent("Box") and "box" or "object"),
+			kind = player and "player" or (object:hasComponent("Box") and "box"
+				or (object:hasComponent("Grass") and "grass") or "object"),
 			interactive = object:hasComponent("InteractiveObject"),
 			grid = {x = transform.gridX, y = transform.gridY},
 			world = {x = transform.x, y = transform.y},
@@ -44,6 +45,8 @@ local function captureObjects(scene, board)
 			entry.characterClass = characterClass.id
 			entry.characterClassName = characterClass.name
 		end
+		local grass = object:getComponent("Grass")
+		if grass then entry.state = grass.state end
 		if stateMachine then entry.characterState = stateMachine.currentName end
 		if transform.tween then
 			entry.tween = {
@@ -97,11 +100,19 @@ local function captureHistory(scene, objectIndexes)
 	for _, snapshots in ipairs(scene.history and scene.history.actions or {}) do
 		local action = {}
 		for _, snapshot in ipairs(snapshots) do
-			action[#action + 1] = {
-				object = objectIndexes[snapshot.object],
-				x = snapshot.gridX,
-				y = snapshot.gridY,
-			}
+			if snapshot.component then
+				action[#action + 1] = {
+					object = objectIndexes[snapshot.object],
+					component = snapshot.component,
+					state = snapshot.state,
+				}
+			else
+				action[#action + 1] = {
+					object = objectIndexes[snapshot.object],
+					x = snapshot.gridX,
+					y = snapshot.gridY,
+				}
+			end
 		end
 		actions[#actions + 1] = action
 	end
