@@ -83,6 +83,10 @@ function Game:keypressed(key, scancode, isrepeat)
     self.scenes:keypressed(key, scancode, isrepeat)
 end
 
+function Game:keyreleased(key, scancode)
+	self.scenes:keyreleased(key, scancode)
+end
+
 function Game:textinput(text)
     if self.console and self.console.open then self.console:textinput(text) end
 end

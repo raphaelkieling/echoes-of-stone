@@ -2,6 +2,7 @@ local cameraLib = require("vendor.hump.camera")
 local Scene = require("src.core.Scene")
 local StateMachine = require("src.core.StateMachine")
 local ActionHistory = require("src.game.ActionHistory")
+local PlayerSelector = require("src.game.PlayerSelector")
 local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
 local UndoHistoryOverlay = require("src.dev.UndoHistoryOverlay")
@@ -50,6 +51,7 @@ function PlayingScene:init(game)
 	self.mobileControls = game.mobileControls
 	self.camera = cameraLib(0, 0, 1)
 	self.history = ActionHistory()
+	self.playerSelector = PlayerSelector()
 	self.componentStateSubscription = self.game.events:on("component.state_changed", function(payload)
 		if payload.cause ~= "flame" then return end
 		local object = self.board and self.board.objects[payload.objectIndex]
@@ -114,7 +116,7 @@ function PlayingScene:loadLevel()
 		players = #self.board.players,
 	})
     self.history:clear()
-    self.activeIndex = 1
+	self.playerSelector:reset()
     self:snapCameraToTarget()
 end
 
@@ -162,7 +164,7 @@ end
 
 function PlayingScene:currentPlayer()
     if #self.board.players == 0 then return nil end
-    return self.board.players[self.activeIndex]
+    return self.board.players[self.playerSelector.activeIndex]
 end
 
 function PlayingScene:loadNextLevel()
@@ -247,7 +249,7 @@ function PlayingScene:movePlayer(direction)
 		self.board, direction, self.history)
 	self.game.events:emit("player.moved", {
 		level = self.levelPath,
-		playerIndex = self.activeIndex,
+		playerIndex = self.playerSelector.activeIndex,
 		characterClass = class.id,
 		directionX = direction.x,
 		directionY = direction.y,
@@ -269,10 +271,13 @@ function PlayingScene:undo()
 end
 
 function PlayingScene:selectNextPlayer()
-	if #self.board.players == 0 then return end
-	local previousIndex = self.activeIndex
-	self.activeIndex = self.activeIndex % #self.board.players + 1
-	self.game.events:emit("player.switched", {from = previousIndex, to = self.activeIndex})
+	self:emitPlayerSwitch(self.playerSelector:selectNext(self.board.players))
+end
+
+function PlayingScene:emitPlayerSwitch(change)
+	if change then
+		self.game.events:emit("player.switched", change)
+	end
 end
 
 function PlayingScene:updateBufferedMovement()
@@ -284,6 +289,7 @@ function PlayingScene:updateBufferedMovement()
 end
 
 function PlayingScene:updateHeldMovement(dt)
+	if self.playerSelector:isHeld() then return end
 	if self.heldMoveKey then
 		if not love.keyboard.isDown(self.heldMoveKey) then
 			self.heldMoveKey = nil
@@ -356,6 +362,7 @@ end
 
 function PlayingScene:clearHeldMovement()
     self.heldMoveKey = nil
+	self.playerSelector:cancel()
     self.moveRepeatTimer = 0
 	self.pendingDirection = nil
 	self.mobileMoveDirection = nil
@@ -495,8 +502,21 @@ function PlayingScene:handlePlayingKey(key)
         return
     end
     if self:handleCameraKey(key) then return end
+    if Keymap.matches("switchPlayer", key) then
+		if self.playerSelector:isHeld() then return end
+        if not self.board:isMoving() and not self.states:is("transitioning") then
+			self.heldMoveKey = nil
+			self.pendingDirection = nil
+			self.playerSelector:begin()
+		end
+		return
+	end
     local direction = Keymap.direction(key)
     if direction then
+		if self.playerSelector:isHeld() then
+			self:emitPlayerSwitch(self.playerSelector:selectInDirection(self.board.players, direction))
+			return
+		end
         self.heldMoveKey = key
         self.moveRepeatTimer = MOVE_REPEAT_DELAY
         if self.states:is("transitioning") then return end
@@ -509,9 +529,7 @@ function PlayingScene:handlePlayingKey(key)
         return
     end
     if self.board:isMoving() or self.states:is("transitioning") then return end
-    if Keymap.matches("switchPlayer", key) then
-        self:selectNextPlayer()
-    elseif Keymap.matches("undo", key) then
+    if Keymap.matches("undo", key) then
 		if self.heldUndoKey ~= key then
 			self.heldUndoKey = key
 			self.undoRepeatTimer = UNDO_REPEAT_INTERVAL
@@ -522,6 +540,15 @@ end
 
 function PlayingScene:keypressed(key)
 	self.states:dispatch("keypressed", key)
+end
+
+function PlayingScene:keyreleased(key)
+	if not Keymap.matches("switchPlayer", key) or not self.playerSelector:isHeld() then return end
+	if not self.board:isMoving() and self.states:is("playing") then
+		self:emitPlayerSwitch(self.playerSelector:finish(self.board.players))
+	else
+		self.playerSelector:cancel()
+	end
 end
 
 return PlayingScene

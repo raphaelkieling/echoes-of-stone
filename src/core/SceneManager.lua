@@ -44,6 +44,12 @@ function SceneManager:keypressed(key)
     end
 end
 
+function SceneManager:keyreleased(key)
+	if self.current and self.current.keyreleased then
+		self.current:keyreleased(key)
+	end
+end
+
 function SceneManager:resize(width, height)
     if self.current and self.current.resize then
         self.current:resize(width, height)

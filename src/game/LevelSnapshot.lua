@@ -136,7 +136,7 @@ function LevelSnapshot.capture(scene)
 			index = scene.levelIndex,
 			sceneState = scene.states and scene.states.currentName or nil,
 		},
-		activePlayerIndex = scene.activeIndex,
+		activePlayerIndex = scene.playerSelector.activeIndex,
 		board = {
 			width = board.width,
 			height = board.height,
