@@ -3,6 +3,13 @@ local Bonfire = require("src.components.Bonfire")
 local Board = require("src.game.Board")
 local MovementSession = require("src.game.MovementSession")
 local SpriteRenderer = require("src.components.SpriteRenderer")
+local Transform = require("src.components.Transform")
+local InteractiveObject = require("src.components.InteractiveObject")
+local Player = require("src.components.Player")
+local CharacterMovement = require("src.components.CharacterMovement")
+local CharacterClasses = require("src.characters.Classes")
+local ActionHistory = require("src.game.ActionHistory")
+local EventEmitter = require("src.core.EventEmitter")
 
 local tests = {}
 
@@ -47,6 +54,116 @@ function tests.board_registers_bonfire_as_a_pushable_interactive_object()
 
 	assert(bonfire:hasComponent("InteractiveObject"))
 	assert(movement:objectAt(3, 4) == bonfire)
+end
+
+local function makeFireBoard(state)
+	local assets = {
+		bonfireAnimation = function(_, _, animationState)
+			return {state = animationState, update = function() end}
+		end,
+		tileAnimation = function()
+			return {update = function() end}
+		end,
+		tileRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+		tilesetRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+	}
+	local board = Board(assets, 5, 1)
+	for x = 0, 4 do board:setCell(x, 0, {walkable = true, wall = false}) end
+	local grass = board:addGrass(3, 0, "tall_grass")
+	local fire = board:addBonfire(state == "unlit" and 2 or 1, 0, {}, state)
+	board.events = EventEmitter.new()
+	return board, grass, fire
+end
+
+local function recordComponentChanges(board, history)
+	board.events:on("component.state_changed", function(payload)
+		if payload.cause ~= "flame" then return end
+		local object = board.objects[payload.objectIndex]
+		history:appendToLatest({{
+			object = object,
+			component = payload.component,
+			state = payload.previousState,
+		}})
+	end)
+end
+
+function tests.unlit_bonfire_does_not_burn_tall_grass()
+	local board, grass = makeFireBoard("unlit")
+	board:update(0)
+	assert(grass:getComponent("Grass").state == "tall")
+	assert(not board:canWalk(3, 0))
+end
+
+function tests.lit_bonfire_burns_grass_and_undo_restores_it_when_pushed()
+	local board, grass, fire = makeFireBoard("lit")
+	local player = GameObject("Dwarf")
+	player:addComponent(Transform(0, 0, 64, 3))
+	player:addComponent(InteractiveObject())
+	player:addComponent(Player())
+	player:addComponent(CharacterClasses.create(Player.Classes.DWARF))
+	player:addComponent(CharacterMovement())
+	board:addObject(player)
+	local history = ActionHistory()
+	recordComponentChanges(board, history)
+
+	local moved, changes = player:getComponent("CharacterMovement"):move(
+		board, {x = 1, y = 0}, history)
+	assert(moved)
+	assert(fire:getComponent("Transform").gridX == 2)
+	board:update(0)
+	assert(grass:getComponent("Grass").state == "grass")
+	assert(board:canWalk(3, 0))
+
+	assert(history:undo())
+	assert(fire:getComponent("Transform").gridX == 1)
+	assert(grass:getComponent("Grass").state == "tall")
+	assert(not board:canWalk(3, 0))
+end
+
+function tests.undo_reverses_farmer_and_fire_state_changes_in_reverse_order()
+	local assets = {
+		bonfireAnimation = function(_, _, state)
+			return {state = state, update = function() end}
+		end,
+		tileAnimation = function()
+			return {update = function() end}
+		end,
+		tileRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+		tilesetRenderer = function()
+			return SpriteRenderer({}, 2, 1)
+		end,
+	}
+	local board = Board(assets, 3, 1)
+	for x = 0, 2 do board:setCell(x, 0, {walkable = true, wall = false}) end
+	local farmer = GameObject("Farmer")
+	farmer:addComponent(Transform(0, 0, 64, 3))
+	farmer:addComponent(InteractiveObject())
+	farmer:addComponent(Player())
+	farmer:addComponent(CharacterClasses.create(Player.Classes.FARMER))
+	farmer:addComponent(CharacterMovement())
+	board:addObject(farmer)
+	board:addBonfire(2, 0, {}, "lit")
+	local grass = board:addGrass(1, 0, "grass")
+	local history = ActionHistory()
+	board.events = EventEmitter.new()
+	recordComponentChanges(board, history)
+
+	local moved, changes = farmer:getComponent("CharacterMovement"):move(
+		board, {x = 1, y = 0}, history)
+	assert(moved and #changes == 0)
+	board:update(0)
+	assert(grass:getComponent("Grass").state == "grass",
+		"the adjacent lit fire should burn the grass the farmer just raised")
+
+	assert(history:undo())
+	assert(grass:getComponent("Grass").state == "grass",
+		"undo should restore the initial short-grass state")
 end
 
 return tests

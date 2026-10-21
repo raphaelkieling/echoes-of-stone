@@ -8,6 +8,8 @@ local Box = require("src.components.Box")
 local Target = require("src.components.Target")
 local Bonfire = require("src.components.Bonfire")
 local Grass = require("src.components.Grass")
+local Flameable = require("src.components.Flameable")
+local FlameSource = require("src.components.FlameSource")
 local Shake = require("src.components.Shake")
 local CharacterFactory = require("src.characters.CharacterFactory")
 
@@ -68,6 +70,7 @@ function Board:addBonfire(x, y, tileset, state)
     object:addComponent(Transform(x, y, 64, 1))
     object:addComponent(InteractiveObject())
     object:addComponent(Bonfire(self.assets, tileset, state))
+    object:addComponent(FlameSource("Bonfire", "lit", 1))
     object:addComponent(self.assets:tilesetRenderer(tileset, 2, 1))
     return self:addObject(object)
 end
@@ -77,6 +80,7 @@ function Board:addGrass(x, y, state)
     object:addComponent(Transform(x, y, 64, 1))
     object:addComponent(Grass(self.assets, self, x, y,
         state == "tall_grass" and "tall" or "grass"))
+    object:addComponent(Flameable("Grass", "grass"))
     object:addComponent(self.assets:tileRenderer(2, 1))
     return self:addObject(object)
 end
@@ -133,10 +137,11 @@ function Board:addTrigger(object, trigger)
 end
 
 function Board:processMovement(changes)
-    if not self.events then return end
-    for _, change in ipairs(changes or {}) do
-        for _, entry in ipairs(self.triggers) do
-            entry.component:onObjectMoved(change, self.events)
+    if self.events then
+        for _, change in ipairs(changes or {}) do
+            for _, entry in ipairs(self.triggers) do
+                entry.component:onObjectMoved(change, self.events)
+            end
         end
     end
 end

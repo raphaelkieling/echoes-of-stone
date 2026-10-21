@@ -12,12 +12,22 @@ function ActionHistory:record(snapshots)
     end
 end
 
+function ActionHistory:appendToLatest(snapshots)
+	local action = self.actions[#self.actions]
+	if not action then return false end
+	for _, snapshot in ipairs(snapshots or {}) do
+		action[#action + 1] = snapshot
+	end
+	return true
+end
+
 function ActionHistory:undo()
     local snapshots = table.remove(self.actions)
     if not snapshots then
         return false
     end
-    for _, snapshot in ipairs(snapshots) do
+    for index = #snapshots, 1, -1 do
+        local snapshot = snapshots[index]
         if snapshot.component then
             snapshot.object:getComponent(snapshot.component):setState(snapshot.state)
         else

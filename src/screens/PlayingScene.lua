@@ -50,6 +50,17 @@ function PlayingScene:init(game)
 	self.mobileControls = game.mobileControls
 	self.camera = cameraLib(0, 0, 1)
 	self.history = ActionHistory()
+	self.componentStateSubscription = self.game.events:on("component.state_changed", function(payload)
+		if payload.cause ~= "flame" then return end
+		local object = self.board and self.board.objects[payload.objectIndex]
+		if object and payload.component then
+			self.history:appendToLatest({{
+				object = object,
+				component = payload.component,
+				state = payload.previousState,
+			}})
+		end
+	end)
 	self.levelIndex = 1
 	self.transition = nil
 	self.cameraIntro = nil
@@ -79,6 +90,7 @@ function PlayingScene:leave()
 	self:clearHeldMovement()
 	self.mobileControls:resetTouches()
 	self.narratives:onDetach()
+	self.game.events:off(self.componentStateSubscription)
 end
 
 function PlayingScene:loadLevel()
