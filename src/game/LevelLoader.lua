@@ -106,6 +106,23 @@ local function propertiesFromXml(source)
 	return properties
 end
 
+local function normalizePath(path)
+	local parts = {}
+	for part in (path:gsub("\\", "/")):gmatch("[^/]+") do
+		if part == ".." then
+			if #parts > 0 then table.remove(parts) end
+		elseif part ~= "." then
+			parts[#parts + 1] = part
+		end
+	end
+	return table.concat(parts, "/")
+end
+
+local function resolveRelativePath(filePath, relativePath)
+	local directory = filePath:match("^(.*)/[^/]+$") or ""
+	return normalizePath(directory ~= "" and (directory .. "/" .. relativePath) or relativePath)
+end
+
 local function parseTsxTileset(sourcePath, firstgid)
 	local contents, readError = love.filesystem.read(sourcePath)
 	assert(contents, "failed to read external tileset " .. sourcePath .. ": " .. tostring(readError))
@@ -138,7 +155,7 @@ local function parseTsxTileset(sourcePath, firstgid)
 				and math.floor(imageWidth / tileWidth) * math.floor(imageHeight / tileHeight)),
 		columns = columns or (imageWidth and tileWidth and math.floor(imageWidth / tileWidth)),
 		objectalignment = attributes.objectalignment,
-		image = image.source,
+		image = image.source and resolveRelativePath(sourcePath, image.source),
 		imagewidth = imageWidth,
 		imageheight = imageHeight,
 		tiles = tiles,
@@ -151,6 +168,9 @@ local function resolveTilesets(mapPath, tilesets)
 	local resolved = {}
 	for _, tileset in ipairs(tilesets or {}) do
 		if not tileset.source then
+			if tileset.image then
+				tileset.image = resolveRelativePath(mapPath, tileset.image)
+			end
 			resolved[#resolved + 1] = tileset
 		else
 			local sourcePath = mapDirectory ~= "" and (mapDirectory .. "/" .. tileset.source) or tileset.source
@@ -163,6 +183,9 @@ local function resolveTilesets(mapPath, tilesets)
 				local external = json.decode(contents)
 				external.firstgid = tileset.firstgid
 				external.source = sourcePath
+				if external.image then
+					external.image = resolveRelativePath(sourcePath, external.image)
+				end
 				resolved[#resolved + 1] = external
 			else
 				assert(false, "unsupported external tileset format: " .. sourcePath)
@@ -289,7 +312,9 @@ local function loadTiled(path, assets, events)
                     end
                     board:setCell(x, y, cell)
 
-                    if kind == "box" or kind == "target" then
+                    if kind == "bonfire" then
+                        board:addBonfire(x, y, tileset, properties.state)
+                    elseif kind == "box" or kind == "target" then
                         markedObjects[#markedObjects + 1] = {
                             x = x, y = y, kind = kind,
                             tileId = tileMetadata and tileMetadata.id or (gid - tileset.firstgid),
@@ -348,6 +373,8 @@ local function loadTiled(path, assets, events)
                         path, gid - (tileset and tileset.firstgid or 1)))
                     assert(board:canWalk(x, y), "player must be placed on walkable ground in " .. path)
                     board:spawnPlayer(classId, x, y)
+                elseif kind == "bonfire" then
+                    board:addBonfire(x, y, tileset, properties.state)
                 elseif kind == "box" or kind == "target" then
                     markedObjects[#markedObjects + 1] = {x = x, y = y, kind = kind}
                 end

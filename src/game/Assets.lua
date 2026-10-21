@@ -20,6 +20,7 @@ function Assets.new()
     return setmetatable({
         tiles = tiles,
         players = players,
+        tilesetImages = {},
         tileGrid = anim8.newGrid(32, 32, tiles:getWidth(), tiles:getHeight()),
         playerGrid = anim8.newGrid(32, 32, players:getWidth(), players:getHeight()),
         tileColumns = tiles:getWidth() / 32,
@@ -31,12 +32,40 @@ function Assets:tileRenderer(scale, layer)
     return SpriteRenderer(self.tiles, scale or 2, layer)
 end
 
+function Assets:tilesetImage(tileset)
+    local path = assert(tileset and (tileset.imagePath or tileset.image),
+        "tileset does not define an image")
+    if not self.tilesetImages[path] then
+        local image = love.graphics.newImage(path)
+        image:setFilter("nearest", "nearest")
+        self.tilesetImages[path] = image
+    end
+    return self.tilesetImages[path]
+end
+
+function Assets:tilesetRenderer(tileset, scale, layer)
+    return SpriteRenderer(self:tilesetImage(tileset), scale or 2, layer)
+end
+
 function Assets:tileAnimation(tileX, tileY)
     return anim8.newAnimation(self.tileGrid(tileX + 1, tileY + 1), 1)
 end
 
 function Assets:playerAnimation(tileX, tileY)
     return anim8.newAnimation(self.playerGrid(tileX + 1, tileY + 1), 1)
+end
+
+function Assets:bonfireAnimation(tileset, state)
+    local image = self:tilesetImage(tileset)
+    local grid = anim8.newGrid(
+        tileset.tilewidth or 32,
+        tileset.tileheight or 32,
+        image:getWidth(),
+        image:getHeight())
+    if state == "unlit" then
+        return anim8.newAnimation(grid(1, 1), 1)
+    end
+    return anim8.newAnimation(grid("1-6", 2), 0.12)
 end
 
 function Assets:tileQuad(tileId)
