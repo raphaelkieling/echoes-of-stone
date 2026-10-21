@@ -54,14 +54,15 @@ return {
     },
     uiClick = {
         file = nil,
-        volume = 0.28,
+        volume = 0.32,
         synthesis = {
-            duration = 0.045,
-            startFrequency = 980,
-            endFrequency = 690,
-            decay = 65,
-            harmonic = 0.12,
-            noise = 0.015,
+            style = "ui",
+            duration = 0.085,
+            startFrequency = 410,
+            endFrequency = 315,
+            decay = 29,
+            harmonic = 0.2,
+            noise = 0,
         },
     },
 }

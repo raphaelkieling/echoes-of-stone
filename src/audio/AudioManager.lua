@@ -34,6 +34,10 @@ local function synthesize(profile)
             local flutter = 0.78 + 0.22 * math.sin(2 * math.pi * profile.flutter * time)
             value = (tone * 0.18 + filteredNoise * profile.noise * (1 - progress))
                 * envelope * flutter * 0.72
+        elseif profile.style == "ui" then
+            local attack = math.min(1, time * 75)
+            local warmth = math.sin(phase) + math.sin(phase * 2) * profile.harmonic
+            value = warmth * math.exp(-profile.decay * time) * attack * 0.52
         else
             value = (tone + noise * profile.noise) * envelope * 0.62
         end
