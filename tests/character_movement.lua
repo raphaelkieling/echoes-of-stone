@@ -412,22 +412,37 @@ function tests.warrior_stops_the_chain_before_another_object()
     assertPosition(blocker, 4, 0)
 end
 
-function tests.warrior_sinks_a_box_in_passthrough_instead_of_throwing_it_across()
-	local board = makeBoard(0, 5, 0)
+function tests.warrior_pushes_a_box_through_passthrough_when_it_can_land_on_floor()
+	local board = makeBoard(0, 6, 0)
 	board:setCell(3, 0, {walkable = false, wall = false, passthrough = true})
+	board:setCell(4, 0, {walkable = false, wall = false, passthrough = true})
+	board:setCell(6, 0, {walkable = false, wall = true})
+	local warrior = spawnPlayer(board, 1, 0, Player.Classes.WARRIOR)
+	local box = spawnBox(board, 2, 0)
+
+	assert(run(board, warrior, {x = 1, y = 0}))
+	assert(box:getComponent("Sinkable").state == "active")
+	assert(box.active == true, "a box should survive if the push carries it through passthrough")
+	assertPosition(warrior, 2, 0)
+	assertPosition(box, 5, 0)
+end
+
+function tests.warrior_marks_a_box_lost_if_the_push_stops_inside_passthrough()
+	local board = makeBoard(0, 4, 0)
+	board:setCell(3, 0, {walkable = false, wall = false, passthrough = true})
+	board:setCell(4, 0, {walkable = false, wall = true})
 	local warrior = spawnPlayer(board, 1, 0, Player.Classes.WARRIOR)
 	local box = spawnBox(board, 2, 0)
 	local history = ActionHistory()
 
 	assert(run(board, warrior, {x = 1, y = 0}, history))
-	assert(box:getComponent("Sinkable").state == "sunk")
-	assert(box.active == false, "a box pushed into passthrough should sink out of the board")
+	assert(box:getComponent("Sinkable").state == "lost")
+	assert(box.active == false, "a box that stops in passthrough should be marked lost")
 	assertPosition(warrior, 2, 0)
-	assert(not board:isBoxAt(4, 0), "the box must not be propelled through passthrough")
 
 	assert(history:undo())
 	assert(box.active == true and box:getComponent("Sinkable").state == "active",
-		"undo should restore a box sunk into passthrough")
+		"undo should restore a box lost in passthrough")
 	assertPosition(box, 2, 0)
 end
 

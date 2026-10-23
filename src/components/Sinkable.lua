@@ -10,7 +10,7 @@ function Sinkable:init()
 end
 
 function Sinkable:setState(state)
-	assert(state == "active" or state == "sunk", "Sinkable state must be active or sunk")
+	assert(state == "active" or state == "lost", "Sinkable state must be active or lost")
 	if self.state == state then return false end
 	self.state = state
 	if self.owner then self.owner.active = state == "active" end

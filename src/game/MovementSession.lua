@@ -61,7 +61,7 @@ function MovementSession:moveObject(object, x, y)
 	local cell = self.board:getCell(x, y)
 	local sinkable = object:getComponent("Sinkable")
 	if cell and cell.passthrough and sinkable then
-		self:setComponentState(sinkable, "sunk")
+		self:setComponentState(sinkable, "lost")
 		self.positions[object] = nil
 		return
 	end
@@ -120,15 +120,14 @@ function MovementSession:pushChain(actor, destination, direction, maxDistance)
 		local nextX = last.x + direction.x * (distance + 1)
 		local nextY = last.y + direction.y * (distance + 1)
 		local nextCell = self.board:getCell(nextX, nextY)
-		if nextCell and nextCell.passthrough and lastObject:hasComponent("Sinkable") then
+		if not nextCell or nextCell.wall or self:objectAt(nextX, nextY, actor) then
+			break
+		end
+		if nextCell.walkable or (nextCell.passthrough and lastObject:hasComponent("Sinkable")) then
 			distance = distance + 1
+		else
 			break
 		end
-		if not self:canWalk(nextX, nextY)
-			or self:objectAt(nextX, nextY, actor) then
-			break
-		end
-        distance = distance + 1
     end
     if maxDistance then distance = math.min(distance, maxDistance) end
     if distance == 0 then
