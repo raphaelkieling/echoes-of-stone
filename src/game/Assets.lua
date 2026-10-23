@@ -97,6 +97,21 @@ function Assets:mapTile(tileset, tileId)
 	return image, quad, tileWidth, tileHeight
 end
 
+function Assets:mapTileAt(tileset, sourceX, sourceY)
+	local image = self:tilesetImage(tileset)
+	local tileWidth = tileset.tilewidth or 32
+	local tileHeight = tileset.tileheight or 32
+	local cacheKey = table.concat({tileset.image or tileset.imagePath, tileWidth,
+		tileHeight, sourceX, sourceY}, ":")
+	local quad = self.tilesetQuads[cacheKey]
+	if not quad then
+		quad = love.graphics.newQuad(sourceX, sourceY, tileWidth, tileHeight,
+			image:getWidth(), image:getHeight())
+		self.tilesetQuads[cacheKey] = quad
+	end
+	return image, quad, tileWidth, tileHeight
+end
+
 function Assets:playerRenderer(scale, layer)
     return SpriteRenderer(self.players, scale or 2.25, layer or 3, self.outlineShader)
 end

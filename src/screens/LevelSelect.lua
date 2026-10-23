@@ -44,7 +44,7 @@ function LevelSelect:draw()
         local markerRadius = 8 * scale
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.circle("fill", markerX, markerY, markerRadius + 2 * scale)
-        if self.game.levelProgress:isCompleted(level.path) then
+        if self.game.levelProgress:isCompleted(level.key or level.path) then
             UI.setColor("accent")
             love.graphics.circle("fill", markerX, markerY, markerRadius)
             UI.setColor("text")

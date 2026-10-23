@@ -6,7 +6,6 @@ local ConsoleCommands = {}
 
 local function findLevelIndex(levels, query)
     local normalized = query:lower()
-    if normalized == "p" then normalized = "playground" end
 
     local numericLevel = tonumber(normalized)
     for index, level in ipairs(levels) do
@@ -103,9 +102,9 @@ function ConsoleCommands.register(console)
         return "Commands: " .. table.concat(names, ", ")
     end)
 
-    console:registerCommand("jump-to", "load a level by number or name (p = playground)", function(context, args)
+    console:registerCommand("jump-to", "load a level by number or name", function(context, args)
         local query = args[1]
-        if not query then return "Usage: jump-to <level number|name|p>" end
+		if not query then return "Usage: jump-to <level number|name>" end
 
         local levels = LevelLoader.listLevels()
         local index, level = findLevelIndex(levels, query)

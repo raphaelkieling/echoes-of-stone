@@ -1,113 +1,117 @@
 local Board = require("src.game.Board")
 local Player = require("src.components.Player")
-local CharacterClasses = require("src.characters.Classes")
 local json = require("vendor.json")
 
 local LevelLoader = {}
+local MAP_PATH = "maps-v2/Map.ldtk"
 
-local PLAYER_MARKERS = {
-    ["1"] = Player.Classes.DWARF,
-    ["2"] = Player.Classes.WIZARD,
-    ["3"] = Player.Classes.WARRIOR,
-    ["4"] = Player.Classes.TELEKINETIC,
-    ["5"] = Player.Classes.SORCERER,
-    ["6"] = Player.Classes.MYSTERIOUS_PRIEST,
-    ["7"] = Player.Classes.FARMER,
+local PLAYER_CLASSES = {
+	Dwarf = Player.Classes.DWARF,
+	Wizard = Player.Classes.WIZARD,
+	Warrior = Player.Classes.WARRIOR,
+	Telekinetic = Player.Classes.TELEKINETIC,
+	Sorcerer = Player.Classes.SORCERER,
+	MysteriousPriest = Player.Classes.MYSTERIOUS_PRIEST,
+	Farmer = Player.Classes.FARMER,
 }
 
-local PLAYER_CLASS_IDS = {
-    Player.Classes.DWARF,
-    Player.Classes.WIZARD,
-    Player.Classes.WARRIOR,
-    Player.Classes.TELEKINETIC,
-    Player.Classes.SORCERER,
-    Player.Classes.MYSTERIOUS_PRIEST,
-    Player.Classes.FARMER,
-}
+local function readProject(path)
+	local contents, readError = love.filesystem.read(path)
+	assert(contents, "failed to read LDtk project " .. path .. ": " .. tostring(readError))
+	local project = json.decode(contents)
+	assert(type(project.levels) == "table", "LDtk project has no levels: " .. path)
+	return project
+end
 
 function LevelLoader.listLevels()
-    local files = love.filesystem.getDirectoryItems("maps")
-    local tiledLevels = {}
-    local textLevels = {}
-    for _, file in ipairs(files) do
-        if file:match("%.tmj$") then
-            local name = file:gsub("%.tmj$", ""):gsub("%.tmx$", "")
-            tiledLevels[#tiledLevels + 1] = {
-                number = tonumber(name:match("(%d+)$")),
-                name = name,
-                path = "maps/" .. file,
-            }
-        end
-        local number = file:match("^lvl_(%d+)%.txt$")
-        if number then
-            textLevels[#textLevels + 1] = {
-                number = tonumber(number),
-                name = file,
-                path = "maps/" .. file,
-            }
-        end
-    end
-    local levels = #tiledLevels > 0 and tiledLevels or textLevels
-    table.sort(levels, function(a, b)
-        if a.number and b.number then return a.number < b.number end
-        if a.number ~= b.number then return a.number ~= nil end
-        return a.name < b.name
-    end)
-    return levels
-end
-
-local function propertiesByName(properties)
-    local result = {}
-    for _, property in ipairs(properties or {}) do
-        result[property.name] = property.value
-    end
-    return result
-end
-
-local function xmlAttributes(source)
-	local attributes = {}
-	for name, value in source:gmatch('([%w_:%-]+)%s*=%s*"([^"]*)"') do
-		attributes[name] = value
-	end
-	for name, value in source:gmatch("([%w_:%-]+)%s*=%s*'([^']*)'") do
-		attributes[name] = value
-	end
-	return attributes
-end
-
-local function typedProperty(attributes, body)
-	local value = attributes.value
-	if value == nil then value = (body or ""):match("^%s*(.-)%s*$") end
-	if attributes.type == "bool" then return value == "true" end
-	if attributes.type == "int" or attributes.type == "float" then
-		return tonumber(value) or value
-	end
-	return value
-end
-
-local function propertiesFromXml(source)
-	local properties = {}
-	local propertyBlock = source:match("<properties[^>]*>(.-)</properties>") or source
-	for rawAttributes, body in propertyBlock:gmatch("<property%s+([^>]-)>(.-)</property>") do
-		local attributes = xmlAttributes(rawAttributes)
-		properties[#properties + 1] = {
-			name = attributes.name,
-			value = typedProperty(attributes, body),
+	local project = readProject(MAP_PATH)
+	local levels = {}
+	for index, level in ipairs(project.levels) do
+		levels[#levels + 1] = {
+			number = index - 1,
+			name = level.identifier,
+			path = MAP_PATH,
+			identifier = level.identifier,
+			key = MAP_PATH .. "#" .. level.identifier,
 		}
 	end
-	for rawAttributes in propertyBlock:gmatch("<property%s+([^>]-)/%s*>") do
-		local attributes = xmlAttributes(rawAttributes)
-		properties[#properties + 1] = {
-			name = attributes.name,
-			value = typedProperty(attributes),
-		}
-	end
-	return properties
+	return levels
 end
 
-local function normalizePath(path)
+local function levelLayer(level, identifier)
+	for _, layer in ipairs(level.layerInstances or {}) do
+		if layer.__identifier == identifier then return layer end
+	end
+end
+
+local function getField(entity, identifier)
+	for _, field in ipairs(entity.fieldInstances or {}) do
+		if field.__identifier == identifier then return field.__value end
+	end
+end
+
+local function getLayerValueDefinitions(layerDefinition)
+	local values, groups = {}, {}
+	for _, group in ipairs(layerDefinition.intGridValuesGroups or {}) do
+		groups[group.uid] = group.identifier
+	end
+	for _, value in ipairs(layerDefinition.intGridValues or {}) do
+		values[value.value] = {
+			identifier = value.identifier,
+			group = groups[value.groupUid],
+		}
+	end
+	return values
+end
+
+local function findLayerDefinition(project, layer)
+	for _, definition in ipairs(project.defs.layers or {}) do
+		if definition.uid == layer.layerDefUid then return definition end
+	end
+end
+
+local function isWall(value, valueDefinitions)
+	local definition = valueDefinitions[value]
+	return definition and (definition.identifier == "Wall" or definition.group == "Collision") or false
+end
+
+local function findExterior(width, height, values, valueDefinitions)
+	local outside, queue = {}, {}
+	local function add(x, y)
+		if x < 0 or y < 0 or x >= width or y >= height then return end
+		local index = y * width + x + 1
+		if not outside[index] and not isWall(values[index], valueDefinitions) then
+			outside[index] = true
+			queue[#queue + 1] = {x = x, y = y}
+		end
+	end
+
+	for x = 0, width - 1 do
+		add(x, 0)
+		add(x, height - 1)
+	end
+	for y = 0, height - 1 do
+		add(0, y)
+		add(width - 1, y)
+	end
+
+	local cursor = 1
+	while cursor <= #queue do
+		local cell = queue[cursor]
+		cursor = cursor + 1
+		add(cell.x - 1, cell.y)
+		add(cell.x + 1, cell.y)
+		add(cell.x, cell.y - 1)
+		add(cell.x, cell.y + 1)
+	end
+	return outside
+end
+
+local function tilesetPath(projectPath, relativePath)
+	local directory = projectPath:match("^(.*)/[^/]+$") or ""
+	local joined = directory .. "/" .. relativePath
 	local parts = {}
-	for part in (path:gsub("\\", "/")):gmatch("[^/]+") do
+	for part in joined:gsub("\\", "/"):gmatch("[^/]+") do
 		if part == ".." then
 			if #parts > 0 then table.remove(parts) end
 		elseif part ~= "." then
@@ -117,325 +121,160 @@ local function normalizePath(path)
 	return table.concat(parts, "/")
 end
 
-local function resolveRelativePath(filePath, relativePath)
-	local directory = filePath:match("^(.*)/[^/]+$") or ""
-	return normalizePath(directory ~= "" and (directory .. "/" .. relativePath) or relativePath)
-end
+local function loadCollision(project, level, board, grassEntities)
+	local layer = levelLayer(level, "Collision")
+	assert(layer and layer.__type == "IntGrid", "LDtk level needs an IntGrid layer named Collision")
+	local width, height = layer.__cWid, layer.__cHei
+	local gridSize = layer.__gridSize
+	assert(width and height and gridSize and gridSize > 0, "LDtk Collision layer has invalid dimensions")
+	local values = layer.intGridCsv or {}
+	assert(#values == width * height, "LDtk Collision layer has invalid IntGrid data")
+	local layerDefinition = findLayerDefinition(project, layer)
+	assert(layerDefinition, "LDtk project has no Collision layer definition")
+	local valueDefinitions = getLayerValueDefinitions(layerDefinition)
+	local outside = findExterior(width, height, values, valueDefinitions)
 
-local function parseTsxTileset(sourcePath, firstgid)
-	local contents, readError = love.filesystem.read(sourcePath)
-	assert(contents, "failed to read external tileset " .. sourcePath .. ": " .. tostring(readError))
-	local root = contents:match("<tileset%s+([^>]-)>")
-	assert(root, "invalid TSX tileset: " .. sourcePath)
-	local attributes = xmlAttributes(root)
-	local imageTag = contents:match("<image%s+([^>]-)/?%s*>")
-	local image = imageTag and xmlAttributes(imageTag) or {}
-	local tiles = {}
-	for rawTileAttributes, body in contents:gmatch("<tile%s+([^>]-)>(.-)</tile>") do
-		local tileAttributes = xmlAttributes(rawTileAttributes)
-		local id = tonumber(tileAttributes.id)
-		if id then
-			tiles[#tiles + 1] = {id = id, properties = propertiesFromXml(body)}
-		end
-	end
-
-	local tileWidth = tonumber(attributes.tilewidth)
-	local tileHeight = tonumber(attributes.tileheight)
-	local imageWidth = tonumber(image.width)
-	local imageHeight = tonumber(image.height)
-	local columns = tonumber(attributes.columns)
-	return {
-		firstgid = firstgid,
-		name = attributes.name,
-		tilewidth = tileWidth,
-		tileheight = tileHeight,
-		tilecount = tonumber(attributes.tilecount)
-			or (imageWidth and imageHeight and tileWidth and tileHeight
-				and math.floor(imageWidth / tileWidth) * math.floor(imageHeight / tileHeight)),
-		columns = columns or (imageWidth and tileWidth and math.floor(imageWidth / tileWidth)),
-		margin = tonumber(attributes.margin) or 0,
-		spacing = tonumber(attributes.spacing) or 0,
-		objectalignment = attributes.objectalignment,
-		image = image.source and resolveRelativePath(sourcePath, image.source),
-		imagewidth = imageWidth,
-		imageheight = imageHeight,
-		tiles = tiles,
-		source = sourcePath,
-	}
-end
-
-local function resolveTilesets(mapPath, tilesets)
-	local mapDirectory = mapPath:match("^(.*)/[^/]+$") or ""
-	local resolved = {}
-	for _, tileset in ipairs(tilesets or {}) do
-		if not tileset.source then
-			if tileset.image then
-				tileset.image = resolveRelativePath(mapPath, tileset.image)
-			end
-			resolved[#resolved + 1] = tileset
-		else
-			local sourcePath = mapDirectory ~= "" and (mapDirectory .. "/" .. tileset.source) or tileset.source
-			local lowerPath = sourcePath:lower()
-			if lowerPath:match("%.tsx$") then
-				resolved[#resolved + 1] = parseTsxTileset(sourcePath, tileset.firstgid)
-			elseif lowerPath:match("%.tsj$") or lowerPath:match("%.json$") then
-				local contents, readError = love.filesystem.read(sourcePath)
-				assert(contents, "failed to read external tileset " .. sourcePath .. ": " .. tostring(readError))
-				local external = json.decode(contents)
-				external.firstgid = tileset.firstgid
-				external.source = sourcePath
-				if external.image then
-					external.image = resolveRelativePath(sourcePath, external.image)
+	board.width, board.height = width, height
+	board.ldtkMap = true
+	for y = 0, height - 1 do
+		for x = 0, width - 1 do
+			local index = y * width + x + 1
+			local value = values[index]
+			local wall = isWall(value, valueDefinitions)
+			local grass = grassEntities[index] ~= nil
+			local isInside = not outside[index]
+			if isInside or wall then
+				local cell = {
+					walkable = isInside and not wall,
+					wall = wall,
+					terrainKind = wall and "solid" or (grass and "grass" or nil),
+				}
+				board:setCell(x, y, cell)
+				if isInside and grass then
+					local state = grassEntities[index] and grassEntities[index].tall and "tall_grass" or "grass"
+					board:addGrass(x, y, state)
 				end
-				resolved[#resolved + 1] = external
-			else
-				assert(false, "unsupported external tileset format: " .. sourcePath)
 			end
 		end
 	end
-	return resolved
+	return gridSize
 end
 
-local function makeTilesetMetadata(map)
-    local result = {}
-    for _, tileset in ipairs(map.tilesets or {}) do
-        for _, tile in ipairs(tileset.tiles or {}) do
-            result[tileset.firstgid + tile.id] = {
-                id = tile.id,
-                properties = propertiesByName(tile.properties),
-            }
-        end
-    end
-    return result
+local function findTilesetDefinition(project, uid)
+	for _, definition in ipairs(project.defs.tilesets or {}) do
+		if definition.uid == uid then return definition end
+	end
 end
 
-local function cleanGid(gid)
-    -- Tiled reserves the top four bits for horizontal/vertical/diagonal flips.
-    return (gid or 0) % 0x10000000
+local function loadRenderLayers(project, projectPath, level, gridSize, board)
+	local entityLayerIndex
+	for index, layer in ipairs(level.layerInstances or {}) do
+		if layer.__type == "Entities" then entityLayerIndex = index end
+	end
+
+	local layers = level.layerInstances or {}
+	-- LDtk exports layers top-most first, so add them back-to-front for drawing.
+	for index = #layers, 1, -1 do
+		local layer = layers[index]
+		if layer.__type ~= "Entities" and (layer.__opacity or 1) > 0 then
+			local definition = findLayerDefinition(project, layer)
+			local tilesetUid = layer.__tilesetDefUid or layer.overrideTilesetUid
+				or (definition and definition.tilesetDefUid)
+			local tilesetDefinition = findTilesetDefinition(project, tilesetUid)
+			local tiles = {}
+			for _, tile in ipairs(layer.gridTiles or {}) do tiles[#tiles + 1] = tile end
+			for _, tile in ipairs(layer.autoLayerTiles or {}) do tiles[#tiles + 1] = tile end
+			if tilesetDefinition and #tiles > 0 then
+				local relativePath = tilesetDefinition.relPath or layer.__tilesetRelPath
+				if relativePath then
+					local tileSize = tilesetDefinition.tileGridSize
+					local tileset = {
+						image = tilesetPath(projectPath, relativePath),
+						tilewidth = tileSize,
+						tileheight = tileSize,
+						columns = math.floor(tilesetDefinition.pxWid / tileSize),
+					}
+					local renderLayer = board:addRenderLayer(layer.__identifier, layer.__opacity,
+						entityLayerIndex and index < entityLayerIndex)
+					for _, tile in ipairs(tiles) do
+						board:addMapTile(
+							tile.px[1] + (layer.__pxTotalOffsetX or 0),
+							tile.px[2] + (layer.__pxTotalOffsetY or 0),
+							tileset, tile.t, gridSize, renderLayer, tile.f, tile.a,
+							tile.src[1], tile.src[2])
+					end
+				end
+			end
+		end
+	end
 end
 
-local function tilesetForGid(map, gid)
-    if gid <= 0 then return nil end
-    for index = #(map.tilesets or {}), 1, -1 do
-        local tileset = map.tilesets[index]
-        if gid >= tileset.firstgid and gid < tileset.firstgid + (tileset.tilecount or 0) then
-            return tileset
-        end
-    end
+local function collectGrassEntities(level, gridSize, width, height)
+	local layer = levelLayer(level, "Entities")
+	assert(layer and layer.__type == "Entities", "LDtk level needs an Entities layer")
+	local grassEntities = {}
+	for _, entity in ipairs(layer.entityInstances or {}) do
+		if entity.__identifier == "Grass" then
+			local x = math.floor((entity.px[1] + (layer.__pxTotalOffsetX or 0)) / gridSize)
+			local y = math.floor((entity.px[2] + (layer.__pxTotalOffsetY or 0)) / gridSize)
+			assert(x >= 0 and y >= 0 and x < width and y < height,
+				"LDtk Grass entity is outside the Collision layer in " .. level.identifier)
+			grassEntities[y * width + x + 1] = {
+				tall = getField(entity, "Tall") == true,
+			}
+		end
+	end
+	return grassEntities
 end
 
-local function isRoguesTileset(tileset)
-    if not tileset then return false end
-    local imageName = (tileset.image or ""):match("[^/\\]+$") or ""
-    return (tileset.name or ""):lower() == "rogues" or imageName:lower() == "rogues.png"
+local function loadEntities(level, gridSize, board)
+	local layer = levelLayer(level, "Entities")
+	for _, entity in ipairs(layer.entityInstances or {}) do
+		local x = math.floor((entity.px[1] + (layer.__pxTotalOffsetX or 0)) / gridSize)
+		local y = math.floor((entity.px[2] + (layer.__pxTotalOffsetY or 0)) / gridSize)
+		if entity.__identifier == "Player" then
+			local className = getField(entity, "Classes")
+			local classId = PLAYER_CLASSES[className]
+			assert(classId, "LDtk Player has an unknown Classes value: " .. tostring(className))
+			assert(board:canWalk(x, y), string.format("player in %s must be on walkable ground", level.identifier))
+			board:spawnPlayer(classId, x, y)
+		elseif entity.__identifier == "Box" then
+			assert(board:canWalk(x, y), string.format("box in %s must be on walkable ground", level.identifier))
+			board:spawnBox(x, y)
+		elseif entity.__identifier == "Target" then
+			local cell = board:getCell(x, y)
+			assert(cell and cell.walkable, string.format("target in %s must be on walkable ground", level.identifier))
+			cell.target = true
+			board:addTarget(x, y)
+		end
+	end
 end
 
-local function classForRogueTile(tileset, gid)
-    if not isRoguesTileset(tileset) then return nil end
-    local columns = tileset.columns or math.floor(tileset.imagewidth / tileset.tilewidth)
-    local tileId = gid - tileset.firstgid
-    local tileX = tileId % columns
-    local tileY = math.floor(tileId / columns)
-    for _, classId in ipairs(PLAYER_CLASS_IDS) do
-        local sprite = CharacterClasses.create(classId).sprite
-        if sprite.x == tileX and sprite.y == tileY then
-            return classId, tileX, tileY
-        end
-    end
-    return nil, tileX, tileY
-end
+function LevelLoader.load(path, assets, events, levelIdentifier)
+	local project = readProject(path)
+	local level
+	for _, candidate in ipairs(project.levels) do
+		if candidate.identifier == levelIdentifier then
+			level = candidate
+			break
+		end
+	end
+	assert(level, "LDtk level not found: " .. tostring(levelIdentifier))
 
-local function objectGridPosition(object, map, tileset)
-    local x, y = object.x or 0, object.y or 0
-    if not object.gid then
-        return math.floor(x / map.tilewidth), math.floor(y / map.tileheight)
-    end
-
-    local width = object.width or (tileset and tileset.tilewidth) or map.tilewidth
-    local height = object.height or (tileset and tileset.tileheight) or map.tileheight
-    local alignment = (tileset and tileset.objectalignment) or "unspecified"
-    if alignment == "unspecified" then alignment = "bottomleft" end
-
-    local left = x
-    if alignment:find("right", 1, true) then
-        left = x - width
-    elseif alignment == "center" or alignment == "top" or alignment == "bottom" then
-        left = x - width / 2
-    end
-
-    local top = y
-    if alignment:find("bottom", 1, true) then
-        top = y - height
-    elseif alignment == "center" or alignment == "left" or alignment == "right" then
-        top = y - height / 2
-    end
-    return math.floor(left / map.tilewidth), math.floor(top / map.tileheight)
-end
-
-local function loadTiled(path, assets, events)
-    local contents, readError = love.filesystem.read(path)
-    assert(contents, "failed to read " .. path .. ": " .. tostring(readError))
-    local map = json.decode(contents)
-    assert(map.orientation == "orthogonal", "only orthogonal Tiled maps are supported: " .. path)
-    assert(not map.infinite, "infinite Tiled maps are not supported: " .. path)
-    assert(map.width and map.height and map.tilewidth and map.tileheight,
-        "Tiled map is missing dimensions: " .. path)
-    map.tilesets = resolveTilesets(path, map.tilesets)
-
-    local board = Board(assets, map.width, map.height)
-    board.tiledMap = true
-    board.events = events
-    local metadata = makeTilesetMetadata(map)
-    local markedObjects = {}
-
-    for _, layer in ipairs(map.layers or {}) do
-        if layer.visible ~= false and layer.type == "tilelayer" then
-            assert(type(layer.data) == "table", "expected uncompressed tile data in layer " .. layer.name)
-            local layerWidth = layer.width or map.width
-            for index, rawGid in ipairs(layer.data) do
-                local gid = cleanGid(rawGid)
-                if gid ~= 0 then
-                    local x = ((index - 1) % layerWidth) + (layer.x or 0)
-                    local y = math.floor((index - 1) / layerWidth) + (layer.y or 0)
-                    local tileset = tilesetForGid(map, gid)
-                    assert(tileset, string.format("tile GID %d in layer %s has no tileset in %s", gid, layer.name, path))
-                    local tileMetadata = metadata[gid]
-                    local properties = tileMetadata and tileMetadata.properties or {}
-                    local kind = type(properties.kind) == "string"
-						and properties.kind:lower() or nil
-                    local cell = board:getCell(x, y) or {walkable = true, wall = false, target = false}
-
-                    if kind == "solid" or properties.solid then
-                        cell.walkable = false
-                        cell.wall = true
-						cell.terrainKind = "solid"
-					elseif kind == "water" then
-						cell.walkable = false
-						cell.water = true
-						cell.terrainKind = "water"
-					elseif kind == "grass" or kind == "tall_grass" then
-						cell.terrainKind = kind
-					elseif not cell.wall and not cell.water then
-						-- Visual overlays must not undo an explicit terrain rule from another layer.
-						if not cell.terrainKind then cell.walkable = true end
-                    end
-                    board:setCell(x, y, cell)
-
-                    if kind == "grass" or kind == "tall_grass" then
-                        board:addGrass(x, y, kind)
-                    elseif kind == "bonfire" then
-                        board:addBonfire(x, y, tileset, properties.state)
-                    elseif kind == "box" or kind == "target" then
-                        markedObjects[#markedObjects + 1] = {
-                            x = x, y = y, kind = kind,
-                            tileId = tileMetadata and tileMetadata.id or (gid - tileset.firstgid),
-                        }
-                    elseif kind == "player" or (isRoguesTileset(tileset)
-						and classForRogueTile(tileset, gid)) then
-						local inferredClass = classForRogueTile(tileset, gid)
-						local classId = properties.characterClass or inferredClass
-                        assert(classId, string.format(
-                            "player tile in %s does not match a configured character sprite (tile %d)",
-                            path, gid - tileset.firstgid))
-                        assert(board:canWalk(x, y), "player must be placed on walkable ground in " .. path)
-                        board:spawnPlayer(classId, x, y)
-                    elseif kind ~= "player" then
-                        board:addMapTile(x, y, tileset,
-							tileMetadata and tileMetadata.id or (gid - tileset.firstgid))
-                    end
-                end
-            end
-        elseif layer.visible ~= false and layer.type == "objectgroup" then
-            for _, object in ipairs(layer.objects or {}) do
-                local properties = propertiesByName(object.properties)
-                local gid = cleanGid(object.gid)
-                local tileset = tilesetForGid(map, gid)
-                local tileMetadata = metadata[gid]
-                local classIdFromSprite = classForRogueTile(tileset, gid)
-                local kind = properties.kind
-                    or (tileMetadata and tileMetadata.properties.kind)
-                    or (isRoguesTileset(tileset) and "player")
-                    or object.type or object.class or object.name
-                if type(kind) == "string" then kind = kind:lower() end
-                local x, y = objectGridPosition(object, map, tileset)
-
-                if kind == "player" then
-                    local classId = properties.characterClass or classIdFromSprite
-                    assert(classId, string.format(
-                        "player tile in %s does not match a configured character sprite (tile %d)",
-                        path, gid - (tileset and tileset.firstgid or 1)))
-                    assert(board:canWalk(x, y), "player must be placed on walkable ground in " .. path)
-                    board:spawnPlayer(classId, x, y)
-                elseif kind == "bonfire" then
-                    board:addBonfire(x, y, tileset, properties.state)
-                elseif kind == "grass" or kind == "tall_grass" then
-                    board:addGrass(x, y, kind)
-                elseif kind == "box" or kind == "target" then
-                    markedObjects[#markedObjects + 1] = {x = x, y = y, kind = kind}
-                end
-            end
-        end
-    end
-
-    for _, marker in ipairs(markedObjects) do
-        local cell = board:getCell(marker.x, marker.y)
-        assert(cell and cell.walkable and not cell.wall,
-            marker.kind .. " must be placed on walkable ground in " .. path)
-        if marker.kind == "box" then
-            board:spawnBox(marker.x, marker.y, marker.tileId)
-        else
-            cell.target = true
-            board:addTarget(marker.x, marker.y, marker.tileId)
-        end
-    end
-
-    board:refreshTargetStates()
-    return board
-end
-
-function LevelLoader.load(path, assets, events)
-    if path:match("%.tmj$") then
-        return loadTiled(path, assets, events)
-    end
-
-    local contents, readError = love.filesystem.read(path)
-    assert(contents, "failed to read " .. path .. ": " .. tostring(readError))
-
-    local rows = {}
-    local width = 0
-    for line in contents:gmatch("([^\r\n]+)") do
-        rows[#rows + 1] = line
-        width = math.max(width, #line)
-    end
-    assert(#rows > 0 and width > 0, "level is empty: " .. path)
-
-    local board = Board(assets, width, #rows)
-    for row, line in ipairs(rows) do
-        local y = row - 1
-        for x = 0, width - 1 do
-            local marker = line:sub(x + 1, x + 1)
-            if marker == "W" then
-                board:setCell(x, y, {walkable = false, wall = true})
-            elseif marker == "#" or marker == "*" then
-                board:setCell(x, y, {walkable = true, target = marker == "*"})
-                if marker == "*" then
-                    board:addTarget(x, y)
-                end
-                board:spawnBox(x, y)
-            elseif marker == "F" then
-                board:setCell(x, y, {walkable = true, target = true})
-                board:addTarget(x, y)
-            elseif PLAYER_MARKERS[marker] then
-                board:setCell(x, y, {walkable = true})
-                board:spawnPlayer(PLAYER_MARKERS[marker], x, y)
-            elseif marker == " " then
-                board:setCell(x, y, {walkable = true})
-            end
-        end
-    end
-
-    board:refreshTargetStates()
-    return board
+	local entities = levelLayer(level, "Entities")
+	assert(entities, "LDtk level needs an Entities layer")
+	local board = Board(assets, entities.__cWid, entities.__cHei)
+	board.events = events
+	local collision = levelLayer(level, "Collision")
+	assert(collision, "LDtk level needs a Collision layer")
+	local gridSize = collision.__gridSize
+	assert(gridSize and gridSize > 0, "LDtk Collision layer has invalid grid size")
+	local grassEntities = collectGrassEntities(level, gridSize, collision.__cWid, collision.__cHei)
+	loadCollision(project, level, board, grassEntities)
+	loadRenderLayers(project, path, level, gridSize, board)
+	loadEntities(level, gridSize, board)
+	board:refreshTargetStates()
+	return board
 end
 
 return LevelLoader

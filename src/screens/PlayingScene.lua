@@ -93,9 +93,9 @@ function PlayingScene:loadLevel()
     self.pendingDirection = nil
     self.mobileMoveDirection = nil
     self.moveRepeatTimer = 0
-    self.levelPath = level.path
+    self.levelPath = level.key
     if self.board then self:removeChild(self.board) end
-    self.board = LevelLoader.load(level.path, self.game.assets, self.game.events)
+    self.board = LevelLoader.load(level.path, self.game.assets, self.game.events, level.identifier)
     self.board.drawSpace = "world"
     self:addChild(self.board)
     if self.game.console then
@@ -103,7 +103,7 @@ function PlayingScene:loadLevel()
     end
     self.game.events:emit("level.started", {
 		level = level.name,
-		path = level.path,
+		path = level.key,
 		index = self.levelIndex,
 		players = #self.board.players,
 	})

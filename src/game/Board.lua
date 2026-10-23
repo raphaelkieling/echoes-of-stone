@@ -28,9 +28,10 @@ function Board:init(assets, width, height)
     self.targets = {}
     self.targetObjects = {}
     self.renderTiles = {}
+    self.backgroundRenderLayers = {}
+    self.foregroundRenderLayers = {}
     self.debugShowSolid = false
     self.debugShowUndoHistory = false
-    self.tiledMap = false
 end
 
 function Board:cellKey(x, y)
@@ -42,19 +43,56 @@ function Board:setCell(x, y, cell)
 end
 
 
-function Board:addMapTile(x, y, tileset, tileId)
-	local image, quad, tileWidth, tileHeight = self.assets:mapTile(tileset, tileId)
-    self.renderTiles[#self.renderTiles + 1] = {
-        x = x,
-        y = y,
-        tileId = tileId,
-        image = image,
-        quad = quad,
-		scaleX = 64 / tileWidth,
-		scaleY = 64 / tileHeight,
+function Board:addRenderLayer(name, opacity, foreground)
+	local layer = {name = name, opacity = opacity == nil and 1 or opacity, tiles = {}}
+	local layers = foreground and self.foregroundRenderLayers or self.backgroundRenderLayers
+	layers[#layers + 1] = layer
+	return layer
+end
+
+function Board:addMapTile(x, y, tileset, tileId, gridSize, renderLayer, flipFlags, alpha,
+		sourceX, sourceY)
+	local image, quad, tileWidth, tileHeight
+	if sourceX ~= nil and sourceY ~= nil then
+		image, quad, tileWidth, tileHeight = self.assets:mapTileAt(tileset, sourceX, sourceY)
+	else
+		image, quad, tileWidth, tileHeight = self.assets:mapTile(tileset, tileId)
+	end
+	gridSize = gridSize or 32
+	flipFlags = flipFlags or 0
+	local tile = {
+		x = x / gridSize + tileWidth / (2 * gridSize) - 0.5,
+		y = y / gridSize + tileHeight / (2 * gridSize) - 0.5,
+		tileId = tileId,
+		image = image,
+		quad = quad,
+		scaleX = 64 / gridSize,
+		scaleY = 64 / gridSize,
 		tileWidth = tileWidth,
 		tileHeight = tileHeight,
-    }
+		flipX = flipFlags % 2 == 1,
+		flipY = math.floor(flipFlags / 2) % 2 == 1,
+		alpha = alpha == nil and 1 or alpha,
+	}
+	self.renderTiles[#self.renderTiles + 1] = tile
+	if renderLayer then renderLayer.tiles[#renderLayer.tiles + 1] = tile end
+	return tile
+end
+
+local function drawRenderLayers(layers)
+	if #layers == 0 then return end
+	love.graphics.push("all")
+	for _, layer in ipairs(layers) do
+		for _, tile in ipairs(layer.tiles) do
+			love.graphics.setColor(1, 1, 1, layer.opacity * tile.alpha)
+			love.graphics.draw(tile.image, tile.quad,
+				(tile.x + 0.5) * 64, (tile.y + 0.5) * 64, 0,
+				tile.flipX and -tile.scaleX or tile.scaleX,
+				tile.flipY and -tile.scaleY or tile.scaleY,
+				tile.tileWidth / 2, tile.tileHeight / 2)
+		end
+	end
+	love.graphics.pop()
 end
 
 function Board:addTarget(x, y, tileId)
@@ -194,12 +232,8 @@ function Board:draw(activePlayer)
     if activePlayer and type(activePlayer.currentPlayer) == "function" then
         activePlayer = activePlayer:currentPlayer()
     end
-    if self.tiledMap then
-        for _, tile in ipairs(self.renderTiles) do
-            love.graphics.draw(tile.image, tile.quad,
-                (tile.x + 0.5) * 64, (tile.y + 0.5) * 64, 0,
-				tile.scaleX, tile.scaleY, tile.tileWidth / 2, tile.tileHeight / 2)
-        end
+    if self.ldtkMap then
+        drawRenderLayers(self.backgroundRenderLayers)
     else
         local floorQuad = self.assets.tileGrid(1, 1)[1]
         local wallQuad = self.assets.tileGrid(2, 1)[1]
@@ -255,6 +289,8 @@ function Board:draw(activePlayer)
     for _, object in ipairs(drawOrder) do
         object:draw({selected = object == activePlayer})
     end
+
+	if self.ldtkMap then drawRenderLayers(self.foregroundRenderLayers) end
 
     if self.debugShowSolid then
         love.graphics.push("all")

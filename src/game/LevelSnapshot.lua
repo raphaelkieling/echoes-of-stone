@@ -119,7 +119,7 @@ function LevelSnapshot.capture(scene)
 		board = {
 			width = board.width,
 			height = board.height,
-			tiledMap = board.tiledMap == true,
+			ldtkMap = board.ldtkMap == true,
 			cells = sortedCells(board),
 			renderTiles = renderTiles,
 			targets = captureTargets(board),

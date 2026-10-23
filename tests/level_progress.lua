@@ -16,17 +16,17 @@ function tests.completed_levels_are_saved_and_restored()
 	local storage = memoryStorage()
 	local progress = LevelProgress.new(storage)
 
-	assert(progress:markCompleted("maps/level1.tmj"))
-	assert(progress:isCompleted("maps/level1.tmj"))
+	assert(progress:markCompleted("maps-v2/Map.ldtk#Level_0"))
+	assert(progress:isCompleted("maps-v2/Map.ldtk#Level_0"))
 
 	local loadedProgress = LevelProgress.new(storage)
-	assert(loadedProgress:isCompleted("maps/level1.tmj"))
-	assert(not loadedProgress:isCompleted("maps/level2.tmj"))
+	assert(loadedProgress:isCompleted("maps-v2/Map.ldtk#Level_0"))
+	assert(not loadedProgress:isCompleted("maps-v2/Map.ldtk#Level_1"))
 end
 
 function tests.invalid_save_data_is_ignored()
 	local progress = LevelProgress.new(memoryStorage("not json"))
-	assert(not progress:isCompleted("maps/level1.tmj"))
+	assert(not progress:isCompleted("maps-v2/Map.ldtk#Level_0"))
 end
 
 return tests

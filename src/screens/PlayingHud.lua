@@ -57,7 +57,7 @@ function PlayingHud:drawLevelTimeline()
 		local x = firstX + spacing * (index - 1)
 		love.graphics.setColor(0, 0, 0, 1)
 		love.graphics.circle("fill", x, y, radius + 2)
-		if scene.game.completedLevels[level.path] then
+		if scene.game.completedLevels[level.key or level.path] then
 			UI.setColor("accent")
 			love.graphics.circle("fill", x, y, radius)
 		else
