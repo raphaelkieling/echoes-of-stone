@@ -13,8 +13,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 310.75,
-                "y": 168
+                "x": 320,
+                "y": 320.25
             }
         },
         "level-farmer-tutorial.tmj#rogues": {
@@ -27,8 +27,8 @@
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 309,
-                "y": 141.33333333333331
+                "x": 319.99999999999994,
+                "y": 320.33333333333337
             }
         },
         "level-fire-tutorial.tmj#rogues": {
@@ -38,11 +38,8 @@
             "scaleInDock": 1
         },
         "level-tutorial-undo.tmj": {
-            "expandedObjectLayers": [
-                6
-            ],
             "scale": 2,
-            "selectedLayer": 2,
+            "selectedLayer": 0,
             "viewCenter": {
                 "x": 220.75,
                 "y": 212
@@ -52,8 +49,8 @@
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 313,
-                "y": 188.66666666666663
+                "x": 247.66666666666669,
+                "y": 179.33333333333334
             }
         },
         "level-wizard-many-boxes.tmj#rogues": {
@@ -64,10 +61,10 @@
         },
         "level0.tmj": {
             "scale": 2,
-            "selectedLayer": 2,
+            "selectedLayer": 0,
             "viewCenter": {
                 "x": 195.75,
-                "y": 169.5
+                "y": 120
             }
         },
         "level0.tmj#rogues": {
@@ -107,8 +104,8 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 271.25,
-                "y": 272.5
+                "x": 211.75,
+                "y": 213.5
             }
         },
         "level1.tmj#tiles": {
@@ -136,8 +133,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 274.25,
-                "y": 268.5
+                "x": 320,
+                "y": 320.25
             }
         },
         "level2.tmj#tiles": {
@@ -161,8 +158,8 @@
             "scale": 0.9866,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 319.7851206162578,
-                "y": 320.2919116156497
+                "x": 270.11960267585647,
+                "y": 233.12385972025137
             }
         },
         "level4.tmj#rogues": {
@@ -175,8 +172,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 320.25,
-                "y": 320
+                "x": 194.25,
+                "y": 163
             }
         },
         "level5.tmj#rogues": {
@@ -206,7 +203,7 @@
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 320,
+                "x": 319.99999999999994,
                 "y": 320.33333333333337
             }
         },

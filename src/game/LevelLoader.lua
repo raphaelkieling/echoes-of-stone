@@ -107,6 +107,23 @@ local function findExterior(width, height, values, valueDefinitions)
 	return outside
 end
 
+local function collectGroundCells(level, gridSize, width, height)
+	local layer = levelLayer(level, "Ground")
+	if not layer or layer.__type ~= "Tiles" or #(layer.gridTiles or {}) == 0 then
+		return nil
+	end
+
+	local cells = {}
+	for _, tile in ipairs(layer.gridTiles) do
+		local x = math.floor((tile.px[1] + (layer.__pxTotalOffsetX or 0)) / gridSize)
+		local y = math.floor((tile.px[2] + (layer.__pxTotalOffsetY or 0)) / gridSize)
+		if x >= 0 and y >= 0 and x < width and y < height then
+			cells[y * width + x + 1] = true
+		end
+	end
+	return cells
+end
+
 local function tilesetPath(projectPath, relativePath)
 	local directory = projectPath:match("^(.*)/[^/]+$") or ""
 	local joined = directory .. "/" .. relativePath
@@ -133,6 +150,7 @@ local function loadCollision(project, level, board, grassEntities)
 	assert(layerDefinition, "LDtk project has no Collision layer definition")
 	local valueDefinitions = getLayerValueDefinitions(layerDefinition)
 	local outside = findExterior(width, height, values, valueDefinitions)
+	local groundCells = collectGroundCells(level, gridSize, width, height)
 
 	board.width, board.height = width, height
 	board.ldtkMap = true
@@ -142,7 +160,12 @@ local function loadCollision(project, level, board, grassEntities)
 			local value = values[index]
 			local wall = isWall(value, valueDefinitions)
 			local grass = grassEntities[index] ~= nil
-			local isInside = not outside[index]
+			local isInside
+			if groundCells then
+				isInside = groundCells[index] == true
+			else
+				isInside = not outside[index]
+			end
 			if isInside or wall then
 				local cell = {
 					walkable = isInside and not wall,
