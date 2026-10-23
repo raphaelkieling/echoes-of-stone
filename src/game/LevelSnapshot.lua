@@ -60,27 +60,6 @@ local function captureObjects(scene, board)
 	return objects, indexes
 end
 
-local function captureTriggers(board)
-	local triggers = {}
-	for index, entry in ipairs(board.triggers) do
-		local trigger = entry.component
-		local item = {
-			index = index,
-			type = entry.object:hasComponent("PointTrigger") and "point" or "area",
-			narrativeId = trigger.narrativeId,
-			once = trigger.once,
-			fired = trigger.fired,
-		}
-		if trigger.width and trigger.height then
-			item.bounds = {x = trigger.x, y = trigger.y, width = trigger.width, height = trigger.height}
-		else
-			item.cell = {x = trigger.x, y = trigger.y}
-		end
-		triggers[#triggers + 1] = item
-	end
-	return triggers
-end
-
 local function captureTargets(board)
 	local targets = {}
 	for _, target in ipairs(board.targets) do
@@ -145,7 +124,6 @@ function LevelSnapshot.capture(scene)
 			renderTiles = renderTiles,
 			targets = captureTargets(board),
 			objects = objects,
-			triggers = captureTriggers(board),
 			undoHistory = captureHistory(scene, objectIndexes),
 		},
 	}

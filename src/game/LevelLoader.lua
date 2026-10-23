@@ -1,9 +1,6 @@
 local Board = require("src.game.Board")
-local GameObject = require("src.core.GameObject")
 local Player = require("src.components.Player")
 local CharacterClasses = require("src.characters.Classes")
-local PointTrigger = require("src.components.triggers.PointTrigger")
-local AreaTrigger = require("src.components.triggers.AreaTrigger")
 local json = require("vendor.json")
 
 local LevelLoader = {}
@@ -361,27 +358,6 @@ local function loadTiled(path, assets, events)
                     or object.type or object.class or object.name
                 if type(kind) == "string" then kind = kind:lower() end
                 local x, y = objectGridPosition(object, map, tileset)
-
-                local narrativeId = properties.narrative_trigger
-
-                if narrativeId and narrativeId ~= "" then
-                    local triggerObject = GameObject("Narrative trigger: " .. narrativeId)
-                    local trigger
-                    local options = {once = properties.trigger_once}
-                    if object.point then
-                        trigger = PointTrigger(narrativeId, x, y, options)
-                    elseif object.width and object.height and object.width > 0 and object.height > 0
-                        and not object.ellipse and not object.polygon and not object.polyline then
-                        trigger = AreaTrigger(narrativeId, object.x or 0, object.y or 0,
-                            object.width, object.height, map.tilewidth, map.tileheight, options)
-                    else
-                        assert(false, string.format(
-                            "narrative trigger '%s' in %s must be a Tiled point or rectangle",
-                            narrativeId, path))
-                    end
-                    triggerObject:addComponent(trigger)
-                    board:addTrigger(triggerObject, trigger)
-                end
 
                 if kind == "player" then
                     local classId = properties.characterClass or classIdFromSprite

@@ -2,7 +2,6 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 
 local suites = {
     {name = "character_movement", tests = require("tests.character_movement")},
-    {name = "narrative_triggers", tests = require("tests.narrative_triggers")},
     {name = "board_win_condition", tests = require("tests.board_win_condition")},
     {name = "target_component", tests = require("tests.target_component")},
     {name = "bonfire_component", tests = require("tests.bonfire_component")},
@@ -10,7 +9,6 @@ local suites = {
     {name = "level_progress", tests = require("tests.level_progress")},
     {name = "console_commands", tests = require("tests.console_commands")},
     {name = "audio_manager", tests = require("tests.audio_manager")},
-    {name = "narrative_voice", tests = require("tests.narrative_voice")},
 }
 local passed, failed = 0, 0
 

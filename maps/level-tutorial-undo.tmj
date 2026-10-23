@@ -63,36 +63,6 @@
          "width":20,
          "x":0,
          "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":6,
-         "name":"Entities",
-         "objects":[
-                {
-                 "height":0,
-                 "id":8,
-                 "name":"",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"narrative_trigger",
-                         "type":"string",
-                         "value":"tutorial_undo"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":240,
-                 "y":208
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
         }],
  "nextlayerid":7,
  "nextobjectid":9,

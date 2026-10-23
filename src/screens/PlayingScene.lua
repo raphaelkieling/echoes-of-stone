@@ -7,15 +7,12 @@ local LevelLoader = require("src.game.LevelLoader")
 local Keymap = require("src.settings.Keymap")
 local UndoHistoryOverlay = require("src.dev.UndoHistoryOverlay")
 local PlayingHud = require("src.screens.PlayingHud")
-local NarrativeCatalog = require("src.game.narratives.NarrativeCatalog")
-local SequenceRunner = require("src.game.narratives.SequenceRunner")
 local PlayingStates = {
 	entering = require("src.screens.playing_states.Entering"),
 	playing = require("src.screens.playing_states.Playing"),
 	paused = require("src.screens.playing_states.Paused"),
 	transitioning = require("src.screens.playing_states.LevelTransition"),
 	completed = require("src.screens.playing_states.Completed"),
-	narrative = require("src.screens.playing_states.Narrative"),
 }
 
 local PlayingScene = Scene:extend()
@@ -72,11 +69,6 @@ function PlayingScene:init(game)
 	self.undoRepeatTimer = 0
 	self.pauseSelection = 1
 	self.states = StateMachine(self, PlayingStates)
-	self.narratives = self:addChild(SequenceRunner(self.game.events, NarrativeCatalog.load(), {
-		audio = self.game.audio,
-		onBlockingStarted = function(narrative) self:onNarrativeStarted(narrative) end,
-		onBlockingFinished = function(narrative) self:onNarrativeFinished(narrative) end,
-	}))
 	self.hud = self:addChild(PlayingHud(self))
 end
 
@@ -92,7 +84,6 @@ end
 function PlayingScene:leave()
 	self:clearHeldMovement()
 	self.mobileControls:resetTouches()
-	self.narratives:onDetach()
 	self.game.events:off(self.componentStateSubscription)
 end
 
@@ -191,21 +182,6 @@ function PlayingScene:completeLevel()
     end
 end
 
-function PlayingScene:onNarrativeStarted(_narrative)
-	if self.states:is("narrative") then return end
-	self.narrativeReturnState = self.states.currentName or "playing"
-	self:clearHeldMovement()
-	self.mobileControls:resetTouches()
-	self.states:change("narrative")
-end
-
-function PlayingScene:onNarrativeFinished(_narrative)
-	if not self.states:is("narrative") then return end
-	local returnState = self.narrativeReturnState or "playing"
-	self.narrativeReturnState = nil
-	self.states:change(returnState)
-end
-
 function PlayingScene:update(dt)
 	self.states:update(dt)
 	self:updateChildren(dt)
@@ -246,7 +222,7 @@ function PlayingScene:movePlayer(direction)
 	if not player then return false end
 	local class = player:getComponent("CharacterClass")
 	local previousBoxesOnTargets = boxesOnTargets(self.board)
-	local moved, changes = player:getComponent("CharacterMovement"):move(
+	local moved = player:getComponent("CharacterMovement"):move(
 		self.board, direction, self.history)
 	self.game.events:emit("player.moved", {
 		level = self.levelPath,
@@ -256,7 +232,6 @@ function PlayingScene:movePlayer(direction)
 		directionY = direction.y,
 		moved = moved,
 	})
-	if moved then self.board:processMovement(changes) end
 	self.game.audio:play(moved and "move" or "invalidMovement")
 	if moved and hasBoxArrivedOnTarget(self.board, previousBoxesOnTargets) then
 		self.game.audio:play("target")
@@ -393,10 +368,6 @@ end
 
 function PlayingScene:mobileAction(action)
 	if self.states:is("paused") or self.states:is("completed") then
-		self.states:dispatch("mobileAction", action)
-		return
-	end
-	if self.states:is("narrative") then
 		self.states:dispatch("mobileAction", action)
 		return
 	end

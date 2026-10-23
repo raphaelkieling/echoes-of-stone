@@ -63,36 +63,6 @@
          "width":20,
          "x":0,
          "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":8,
-         "name":"Object Layer 1",
-         "objects":[
-                {
-                 "height":0,
-                 "id":8,
-                 "name":"",
-                 "opacity":1,
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"narrative_trigger",
-                         "type":"string",
-                         "value":"first_dwarf_tutorial"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":80,
-                 "y":152
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
         }],
  "nextlayerid":9,
  "nextobjectid":9,

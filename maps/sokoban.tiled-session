@@ -1,5 +1,5 @@
 {
-    "activeFile": "level-farmer-tutorial.tmj",
+    "activeFile": "level0.tmj",
     "expandedProjectPaths": [
         "."
     ],
@@ -64,10 +64,10 @@
         },
         "level0.tmj": {
             "scale": 2,
-            "selectedLayer": 1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 231.25,
-                "y": 187
+                "x": 195.75,
+                "y": 169.5
             }
         },
         "level0.tmj#rogues": {
@@ -243,23 +243,25 @@
         "tileset_characters.tsx",
         "level-tutorial-undo.tmj",
         "level-wizard-many-boxes.tmj",
-        "level-farmer-tutorial.tmj"
+        "level-farmer-tutorial.tmj",
+        "level-fire-tutorial.tmj",
+        "tileset_animated_tiles.tsx"
     ],
     "project": "sokoban.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "level-fire-tutorial.tmj",
         "tileset_animated_tiles.tsx",
-        "tileset_map_01.tsx",
-        "level0.tmj",
-        "level1.tmj",
-        "level2.tmj",
-        "level3.tmj",
-        "level_playground.tmj",
-        "level4.tmj",
-        "level5.tmj",
+        "level-fire-tutorial.tmj",
+        "level-farmer-tutorial.tmj",
+        "level-wizard-many-boxes.tmj",
+        "level-tutorial-undo.tmj",
+        "tileset_characters.tsx",
         "level6.tmj",
-        "tileset_characters.tsx"
+        "level5.tmj",
+        "level4.tmj",
+        "level_playground.tmj",
+        "level3.tmj",
+        "level2.tmj"
     ],
     "tileset.embedInMap": false,
     "tileset.lastUsedFormat": "tsx"

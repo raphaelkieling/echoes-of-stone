@@ -72,12 +72,6 @@ function ConsoleCommands.register(console)
 		return "Undo history " .. (enabled and "on" or "off") .. "."
 	end)
 
-	console:registerToggleCommand("show-narrative-triggers", "show outlines and IDs for Tiled narrative triggers", function(context, enabled)
-		local board = context and context.board
-		if board then board.debugShowNarrativeTriggers = enabled end
-		return "Narrative trigger outlines " .. (enabled and "on" or "off") .. "."
-	end)
-
 	console:registerToggleCommand("mobile-controls", "show or hide mobile touch controls", function(context, enabled)
 		local game = context and context.game
 		if game and game.mobileControls then
