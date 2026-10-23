@@ -4,6 +4,11 @@ local json = require("vendor.json")
 
 local LevelLoader = {}
 local MAP_PATH = "maps-v2/Map.ldtk"
+local BONFIRE_TILESET = {
+	imagePath = "assets/animated-tiles.png",
+	tilewidth = 32,
+	tileheight = 32,
+}
 
 local PLAYER_CLASSES = {
 	Dwarf = Player.Classes.DWARF,
@@ -149,8 +154,8 @@ local function loadCollision(project, level, board, grassEntities)
 	local layerDefinition = findLayerDefinition(project, layer)
 	assert(layerDefinition, "LDtk project has no Collision layer definition")
 	local valueDefinitions = getLayerValueDefinitions(layerDefinition)
-	local outside = findExterior(width, height, values, valueDefinitions)
 	local groundCells = collectGroundCells(level, gridSize, width, height)
+	local outside = not groundCells and findExterior(width, height, values, valueDefinitions) or nil
 
 	board.width, board.height = width, height
 	board.ldtkMap = true
@@ -250,6 +255,24 @@ local function collectGrassEntities(level, gridSize, width, height)
 	return grassEntities
 end
 
+local function loadPassthroughEntities(level, gridSize, board)
+	local layer = levelLayer(level, "Entities")
+	for _, entity in ipairs(layer.entityInstances or {}) do
+		if entity.__identifier == "Passthrough" then
+			local x = math.floor((entity.px[1] + (layer.__pxTotalOffsetX or 0)) / gridSize)
+			local y = math.floor((entity.px[2] + (layer.__pxTotalOffsetY or 0)) / gridSize)
+			assert(x >= 0 and y >= 0 and x < board.width and y < board.height,
+				"LDtk Passthrough entity is outside the Collision layer in " .. level.identifier)
+			local cell = board:getCell(x, y) or {walkable = false}
+			cell.walkable = false
+			cell.wall = false
+			cell.passthrough = true
+			cell.terrainKind = "passthrough"
+			board:setCell(x, y, cell)
+		end
+	end
+end
+
 local function loadEntities(level, gridSize, board)
 	local layer = levelLayer(level, "Entities")
 	for _, entity in ipairs(layer.entityInstances or {}) do
@@ -269,6 +292,9 @@ local function loadEntities(level, gridSize, board)
 			assert(cell and cell.walkable, string.format("target in %s must be on walkable ground", level.identifier))
 			cell.target = true
 			board:addTarget(x, y)
+		elseif entity.__identifier == "Bonfire" then
+			assert(board:canWalk(x, y), string.format("bonfire in %s must be on walkable ground", level.identifier))
+			board:addBonfire(x, y, BONFIRE_TILESET)
 		end
 	end
 end
@@ -295,6 +321,7 @@ function LevelLoader.load(path, assets, events, levelIdentifier)
 	local grassEntities = collectGrassEntities(level, gridSize, collision.__cWid, collision.__cHei)
 	loadCollision(project, level, board, grassEntities)
 	loadRenderLayers(project, path, level, gridSize, board)
+	loadPassthroughEntities(level, gridSize, board)
 	loadEntities(level, gridSize, board)
 	board:refreshTargetStates()
 	return board

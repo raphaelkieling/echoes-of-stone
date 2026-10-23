@@ -1,6 +1,6 @@
 local Component = require("src.core.Component")
 
--- Marks an interactive object that disappears when pushed into water.
+-- Marks an interactive object that disappears when pushed into a passthrough cell.
 local Sinkable = Component:extend()
 Sinkable.componentName = "Sinkable"
 

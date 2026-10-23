@@ -10,11 +10,11 @@
             "scaleInEditor": 1
         },
         "level-farmer-tutorial.tmj": {
-            "scale": 2,
+            "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 320,
-                "y": 320.25
+                "x": 251.66666666666666,
+                "y": 186.66666666666663
             }
         },
         "level-farmer-tutorial.tmj#rogues": {
@@ -27,8 +27,8 @@
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 319.99999999999994,
-                "y": 320.33333333333337
+                "x": 309,
+                "y": 141.33333333333334
             }
         },
         "level-fire-tutorial.tmj#rogues": {
@@ -133,8 +133,8 @@
             "scale": 2,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 320,
-                "y": 320.25
+                "x": 274.25,
+                "y": 268.5
             }
         },
         "level2.tmj#tiles": {
@@ -197,14 +197,11 @@
             "scaleInDock": 1
         },
         "level_playground.tmj": {
-            "expandedObjectLayers": [
-                6
-            ],
             "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 319.99999999999994,
-                "y": 320.33333333333337
+                "x": 320.33333333333326,
+                "y": 320.66666666666663
             }
         },
         "level_playground.tmj#rogues": {

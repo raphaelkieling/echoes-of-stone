@@ -10,6 +10,7 @@ local function sortedCells(board)
 			y = tonumber(y),
 			walkable = cell.walkable == true,
 			wall = cell.wall == true,
+			passthrough = cell.passthrough == true,
 			target = cell.target == true,
 		}
 	end

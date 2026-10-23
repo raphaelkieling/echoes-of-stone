@@ -60,7 +60,7 @@ end
 function MovementSession:moveObject(object, x, y)
 	local cell = self.board:getCell(x, y)
 	local sinkable = object:getComponent("Sinkable")
-	if cell and cell.water and sinkable then
+	if cell and cell.passthrough and sinkable then
 		self:setComponentState(sinkable, "sunk")
 		self.positions[object] = nil
 		return
@@ -89,7 +89,7 @@ function MovementSession:findInRay(startX, startY, direction, actor)
     local x, y = startX, startY
     while true do
         local cell = self.board:getCell(x, y)
-        if not cell or cell.wall or (not cell.walkable and not cell.water) then
+		if not cell or cell.wall or (not cell.walkable and not cell.passthrough) then
 			return nil
 		end
         local target = self:objectAt(x, y, actor)
@@ -120,7 +120,7 @@ function MovementSession:pushChain(actor, destination, direction, maxDistance)
 		local nextX = last.x + direction.x * (distance + 1)
 		local nextY = last.y + direction.y * (distance + 1)
 		local nextCell = self.board:getCell(nextX, nextY)
-		if nextCell and nextCell.water and lastObject:hasComponent("Sinkable") then
+		if nextCell and nextCell.passthrough and lastObject:hasComponent("Sinkable") then
 			distance = distance + 1
 			break
 		end

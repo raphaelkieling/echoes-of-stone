@@ -323,23 +323,23 @@ function tests.wizard_swaps_with_first_object_in_ray()
     assertPosition(box, 1, 0)
 end
 
-function tests.wizard_can_swap_across_water_in_both_directions()
-	local function makeRiverBoard()
+function tests.wizard_can_swap_across_passthrough_cells_in_both_directions()
+	local function makePassthroughBoard()
 		local board = makeBoard(0, 8, 0)
 		for x = 3, 5 do
-			board:setCell(x, 0, {walkable = false, wall = false, water = true})
+			board:setCell(x, 0, {walkable = false, wall = false, passthrough = true})
 		end
 		return board
 	end
 
-	local rightwardBoard = makeRiverBoard()
+	local rightwardBoard = makePassthroughBoard()
 	local leftBankWizard = spawnPlayer(rightwardBoard, 2, 0, Player.Classes.WIZARD)
 	local rightBankBox = spawnBox(rightwardBoard, 6, 0)
 	assert(run(rightwardBoard, leftBankWizard, {x = 1, y = 0}))
 	assertPosition(leftBankWizard, 6, 0)
 	assertPosition(rightBankBox, 2, 0)
 
-	local leftwardBoard = makeRiverBoard()
+	local leftwardBoard = makePassthroughBoard()
 	local rightBankWizard = spawnPlayer(leftwardBoard, 6, 0, Player.Classes.WIZARD)
 	local leftBankBox = spawnBox(leftwardBoard, 2, 0)
 	assert(run(leftwardBoard, rightBankWizard, {x = -1, y = 0}))
@@ -412,22 +412,22 @@ function tests.warrior_stops_the_chain_before_another_object()
     assertPosition(blocker, 4, 0)
 end
 
-function tests.warrior_sinks_a_box_in_water_instead_of_throwing_it_across_the_river()
+function tests.warrior_sinks_a_box_in_passthrough_instead_of_throwing_it_across()
 	local board = makeBoard(0, 5, 0)
-	board:setCell(3, 0, {walkable = false, wall = false, water = true})
+	board:setCell(3, 0, {walkable = false, wall = false, passthrough = true})
 	local warrior = spawnPlayer(board, 1, 0, Player.Classes.WARRIOR)
 	local box = spawnBox(board, 2, 0)
 	local history = ActionHistory()
 
 	assert(run(board, warrior, {x = 1, y = 0}, history))
 	assert(box:getComponent("Sinkable").state == "sunk")
-	assert(box.active == false, "a box pushed into water should sink out of the board")
+	assert(box.active == false, "a box pushed into passthrough should sink out of the board")
 	assertPosition(warrior, 2, 0)
-	assert(not board:isBoxAt(4, 0), "the box must not be propelled through the water")
+	assert(not board:isBoxAt(4, 0), "the box must not be propelled through passthrough")
 
 	assert(history:undo())
 	assert(box.active == true and box:getComponent("Sinkable").state == "active",
-		"undo should restore a box sunk into water")
+		"undo should restore a box sunk into passthrough")
 	assertPosition(box, 2, 0)
 end
 

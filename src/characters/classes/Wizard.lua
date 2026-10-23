@@ -6,7 +6,7 @@ Wizard.name = "Wizard"
 Wizard.sprite = {x = 1, y = 4, scale = 2.25}
 
 function Wizard:canEnterBlockedTile(movement, destination, direction, actor)
-    -- Let the ability inspect across blocked terrain (such as water), but only
+	-- Let the ability inspect across blocked terrain (such as passthrough cells), but only
     -- when it can actually swap with an object beyond it.
     return movement:findInRay(destination.x, destination.y, direction, actor) ~= nil
 end
